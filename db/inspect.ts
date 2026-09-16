@@ -2,7 +2,7 @@ import { supabase } from './client'
 
 async function inspectTables() {
   console.log('🔍 Inspeccionando tablas en Supabase (YU_AM v2.0)...')
-  const tables = ['avatares', 'perfiles', 'nodos_iot', 'telemetria_mq135']
+  const tables = ['readings', 'reactors', 'mediciones_aire', 'avatares', 'perfiles', 'nodos_iot', 'telemetria_mq135']
   
   for (const table of tables) {
     const { data, error, count } = await supabase
@@ -10,9 +10,9 @@ async function inspectTables() {
       .select('*', { count: 'exact', head: true })
     
     if (error) {
-      console.log(`❌ Tabla '${table}': No accesible o no existe (${error.message})`)
+      console.log(`❌ Tabla '${table}': No accesible / No existe (${error.message})`)
     } else {
-      console.log(`✅ Tabla '${table}': Accesible correctamente (Total registros: ${count ?? 0})`)
+      console.log(`✅ Tabla '${table}': Accesible (Total registros: ${count ?? 0})`)
     }
   }
 }
