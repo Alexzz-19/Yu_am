@@ -33,3 +33,8 @@ pnpm-debug.log*
 
 # Vercel
 .vercel
+
+# Protección de Variables de Entorno y Claves Privadas
+.env
+.env.local
+*.env
