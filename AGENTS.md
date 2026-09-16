@@ -32,7 +32,7 @@ YU_AM/
 
 ## 📜 Reglas de Trabajo y Convenciones
 - **Idioma:** Español en documentación, bitácoras y comentarios clave.
-- **Commits:** Mensajes claros siguiendo Conventional Commits (`feat:`, `fix:`, `chore:`, `docs:`).
+- **Commits y Sincronización:** Mensajes claros siguiendo Conventional Commits (`feat:`, `fix:`, `chore:`, `docs:`). **Regla estricta:** Todo cambio o feature completada debe ser commiteado y pusheado inmediatamente al repositorio remoto en GitHub (`origin main`).
 - **Privacidad:** Nunca exponer coordenadas reales de nodos IoT en mapas públicos (Privacy-by-Design).
 - **Actualización de Bitácora:** Al finalizar cada sesión o cambio importante, actualizar obligatoriamente `docs/obsidian/daily/YYYY-MM-DD.md` y registrarlo en este archivo.
 
@@ -45,3 +45,4 @@ YU_AM/
 - **Base de Datos:** Definición del esquema relacional en `db/schema.sql` (tablas de perfiles, avatares, nodos IoT y telemetría MQ-135 con soporte RLS).
 - **Documentación & Obsidian:** Configuración de la estructura en `docs/obsidian/`, índice general, log de desarrollo y nota diaria inicial.
 - **Configuración de IA:** Creación de `AGENTS.md` y `CLAUDE.md` para persistencia de contexto multi-agente.
+- **Frontend & Repositorio Remoto:** Scaffolding de Next.js (App Router, Tailwind CSS, TypeScript), integración del cliente Supabase y vinculación y sincronización exitosa con el repositorio remoto privado en GitHub (`Alexzz-19/YU_AM`).
