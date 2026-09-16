@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import WebSocket from 'ws'
 import * as dotenv from 'dotenv'
 import path from 'path'
 
@@ -12,10 +13,16 @@ if (!supabaseUrl || !supabaseServiceKey) {
   console.warn('⚠️ Advertencia: Faltan variables de entorno de Supabase en db/.env')
 }
 
-// Cliente Supabase para operaciones backend
+// Cliente Supabase compatible con Node.js 20 para operaciones backend
 export const supabase = createClient(supabaseUrl, supabaseServiceKey, {
   auth: {
     persistSession: false,
     autoRefreshToken: false,
+  },
+  global: {
+    headers: { 'x-client-info': 'yuam-backend' },
+  },
+  realtime: {
+    transport: WebSocket as any,
   },
 })
