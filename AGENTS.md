@@ -46,3 +46,8 @@ YU_AM/
 - **Documentación & Obsidian:** Configuración de la estructura en `docs/obsidian/`, índice general, log de desarrollo y nota diaria inicial.
 - **Configuración de IA:** Creación de `AGENTS.md` y `CLAUDE.md` para persistencia de contexto multi-agente.
 - **Frontend & Repositorio Remoto:** Scaffolding de Next.js (App Router, Tailwind CSS, TypeScript), integración del cliente Supabase y vinculación y sincronización exitosa con el repositorio remoto privado en GitHub (`Alexzz-19/YU_AM`).
+
+## ENTORNO DINÁMICO Y MODELOS DE IA
+- **Entorno Multi-Equipo:** El proyecto se desarrolla en múltiples máquinas y distribuciones Linux/Windows.
+- **Modelos Locales Variables:** El proveedor o modelo de IA (OpenCode, DeepSeek, Claude, Gemini u modelos locales en Ollama) puede variar según el equipo activo.
+- **Regla de Portabilidad:** No asumas rutas absolutas fijas fuera de `~/Documentos/MILAB/YU_AM` ni dependas de configuraciones exclusivas del sistema operativo local. Toda ruta debe ser relativa a la raíz del repositorio.
