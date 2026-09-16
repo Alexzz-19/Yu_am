@@ -11,3 +11,5 @@ Registro histórico de hitos y decisiones técnicas del proyecto.
 - **Memoria de IA:** Configuración de `AGENTS.md` y `CLAUDE.md` para persistencia contextual entre múltiples agentes.
 - **Obsidian:** Creación de la estructura de documentación en `docs/obsidian/`.
 - **Documentación:** Generación del `README.md` profesional en español con guías de instalación, requisitos y variables de entorno para el repositorio privado `YU_AM`.
+- **Frontend & Supabase:** Scaffolding de Next.js (App Router, Tailwind CSS, TypeScript) en `web/`, instalación de `@supabase/supabase-js`, creación de `web/lib/supabaseClient.ts` y archivo `.env.local.example`.
+- **Git & GitHub:** Enlace de origen remoto con `Alexzz-19/YU_AM`.
