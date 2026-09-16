@@ -16,6 +16,18 @@
         "SUPABASE_URL": "{env:SUPABASE_URL}",
         "SUPABASE_SERVICE_ROLE_KEY": "{env:SUPABASE_SERVICE_ROLE_KEY}"
       }
+    },
+    "figma": {
+      "type": "local",
+      "command": [
+        "npx",
+        "-y",
+        "@modelcontextprotocol/server-figma"
+      ],
+      "enabled": true,
+      "environment": {
+        "FIGMA_ACCESS_TOKEN": "{env:FIGMA_ACCESS_TOKEN}"
+      }
     }
   }
 }
