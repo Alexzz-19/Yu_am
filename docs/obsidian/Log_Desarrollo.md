@@ -10,3 +10,4 @@ Registro histórico de hitos y decisiones técnicas del proyecto.
 - **Base de Datos:** Creación del esquema inicial en Supabase (`db/schema.sql`) contemplando perfiles, catálogo de 35 avatares, nodos IoT y telemetría MQ-135 con RLS.
 - **Memoria de IA:** Configuración de `AGENTS.md` y `CLAUDE.md` para persistencia contextual entre múltiples agentes.
 - **Obsidian:** Creación de la estructura de documentación en `docs/obsidian/`.
+- **Documentación:** Generación del `README.md` profesional en español con guías de instalación, requisitos y variables de entorno para el repositorio privado `YU_AM`.
