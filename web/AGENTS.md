@@ -13,3 +13,8 @@
 - **Lenguaje:** TypeScript obligatorio (`.tsx` para componentes, `.ts` para utilidades/hooks).
 - **Tipado Estricto:** Prohibido el uso de `any`. Define interfaces/tipos para la telemetría (malla de sensores, estado del reactor y métricas MQ-135).
 - **Consumo Supabase:** Generar o utilizar tipos derivados directamente del esquema de Supabase (`Database['public']['Tables']['readings']['Row']`).
+
+## 🔒 NORMAS GLOBALES DE GIT (ver `AGENTS.md` raíz)
+- No commitear cambios triviales aislados; agrupar por bloque funcional completo.
+- Mensajes concisos, profesionales, en español, con Conventional Commits. Cero "vibecoder".
+- Solo pushear a `main` tras verificar compilación y funcionamiento.

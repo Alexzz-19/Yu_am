@@ -8,3 +8,8 @@
 ## CONFIGURACIÓN DE VARIABLES DE ENTORNO (.env)
 - **Variables requeridas:** `SUPABASE_SERVICE_ROLE_KEY`, `DATABASE_URL`, `DEEPSEEK_API_KEY`.
 - **Regla estricta:** Si falta acceso a la base de datos o la IA, solicita actualizar únicamente `db/.env`. Nunca solicites claves de diseño o UI.
+
+## 🔒 NORMAS GLOBALES DE GIT (ver `AGENTS.md` raíz)
+- No commitear cambios triviales aislados; agrupar por bloque funcional completo.
+- Mensajes concisos, profesionales, en español, con Conventional Commits. Cero "vibecoder".
+- Solo pushear a `main` tras verificar compilación y funcionamiento.

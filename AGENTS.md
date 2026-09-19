@@ -39,9 +39,22 @@ YU_AM/
 
 ## 📜 Reglas de Trabajo y Convenciones
 - **Idioma:** Español en documentación, bitácoras y comentarios clave.
-- **Commits y Sincronización:** Mensajes claros siguiendo Conventional Commits (`feat:`, `fix:`, `chore:`, `docs:`). **Regla estricta:** Todo cambio o feature completada debe ser commiteado y pusheado inmediatamente al repositorio remoto en GitHub (`origin main`).
 - **Privacidad:** Nunca exponer coordenadas reales de nodos IoT en mapas públicos (Privacy-by-Design).
 - **Actualización de Bitácora:** Al finalizar cada sesión o cambio importante, actualizar obligatoriamente `docs/obsidian/daily/YYYY-MM-DD.md` y registrarlo en este archivo.
+
+## 🔒 Directivas Estrictas de Git & Commits
+1. **Frecuencia de commits:**
+   - NO hagas commits por cambios mínimos o triviales individuales.
+   - Agrupa los cambios y realiza UN solo commit ÚNICAMENTE al completar un bloque de trabajo lógico o una tarea funcional completa (ejemplo: terminada una pantalla, arreglado un bug entero, o finalizada la documentación de un módulo).
+2. **Estilo y mensajes de commit (cero "vibecoder"):**
+   - Prohibidos mensajes genéricos o automáticos repetitivos.
+   - Los mensajes deben ser concisos, profesionales y redactados en español claro en el cuerpo o prefijo.
+   - Utiliza verbos de acción directos y Conventional Commits (`feat:`, `fix:`, `chore:`, `docs:`). Ejemplos aceptables:
+     - `feat(web): implementar tarjetas de telemetría en el dashboard`
+     - `fix(db): corregir política RLS para lectura de sensores`
+     - `docs: actualizar instrucciones de instalación en README`
+3. **Autonomía:**
+   - Mantén el código local editable. Solo solicita o ejecuta `git push` a `main` tras verificar que los cambios compilan y funcionan correctamente.
 
 ---
 

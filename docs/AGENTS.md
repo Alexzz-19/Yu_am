@@ -7,3 +7,8 @@
 ## CONFIGURACIÓN DE VARIABLES DE ENTORNO (.env)
 - **Variables requeridas:** `OBSIDIAN_REST_API_KEY`.
 - **Regla estricta:** Solicita actualizar únicamente `docs/.env` para sincronización de notas.
+
+## 🔒 NORMAS GLOBALES DE GIT (ver `AGENTS.md` raíz)
+- No commitear cambios triviales aislados; agrupar por bloque funcional completo.
+- Mensajes concisos, profesionales, en español, con Conventional Commits. Cero "vibecoder".
+- Solo pushear a `main` tras verificar compilación y funcionamiento.
