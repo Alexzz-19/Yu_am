@@ -4,8 +4,15 @@
 
 ## 🚀 Quick Context
 - **Project:** YU'AM v2.0 (Biotechnology & Digital IoT Platform).
+- **Official Repository:** `https://github.com/Alexzz-19/Yu_am.git`
 - **Core Stack:** Next.js (App Router, TypeScript, Tailwind), Supabase (PostgreSQL), ESP32 IoT (MQ-135).
 - **Main Docs:** See `AGENTS.md` for full architectural details and `docs/obsidian/` for the development log.
+
+## 🤖 Multi-Agent Architecture
+- **Root (`/`):** Global Orchestrator Agent (Environment, Git, `opencode.json`).
+- **`web/`:** Frontend Subagent (Next.js, TypeScript, Tailwind CSS, Figma MCP).
+- **`db/`:** Backend Subagent (PostgreSQL, Supabase, RLS, PostgreSQL MCP).
+- **`docs/`:** Documentation Subagent (SDD specs, Obsidian Vault & daily logs).
 
 ## 🛠️ Development Guidelines
 1. Follow existing project conventions and directory structure (`db/`, `web/`, `docs/`).

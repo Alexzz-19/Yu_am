@@ -8,7 +8,14 @@
 - **Alineación:** Plan Nacional de Desarrollo K'atun 2032 (Guatemala) y ODS 3, 4, 11, 12, 13.
 - **Entorno:** Ubuntu / Linux Mint (CPU-only), Node.js, Next.js, Supabase, ESP32 + MQ-135.
 
-## 🛠️ Stack Tecnológico
+## 🤖 Arquitectura Multiagente y Responsabilidades
+- **Raíz (`/`):** Agente Orquestador Global — Gestión general, configuración de entorno (`opencode.json`), portabilidad multi-equipo y control de versiones Git.
+- **`web/`:** Subagente Frontend — Aplicación web en Next.js (App Router, TypeScript estricto, Tailwind CSS, integración Figma MCP).
+- **`db/`:** Subagente Backend — Gestión de esquemas PostgreSQL, políticas RLS, cliente Supabase y conexión PostgreSQL MCP.
+- **`docs/`:** Subagente Documentador — Especificaciones técnicas SDD, vault de Obsidian y bitácoras diarias de desarrollo.
+
+## 🛠️ Stack Tecnológico y Repositorio Oficial
+- **Repositorio Oficial:** `https://github.com/Alexzz-19/Yu_am.git`
 - **Frontend:** Next.js (App Router, TypeScript, Tailwind CSS, Breadcrumbs).
 - **Backend / DB:** Supabase (PostgreSQL, Autenticación, Realtime, RLS).
 - **IoT:** ESP32 + Sensor MQ-135 (con búfer local ante fallas de red).

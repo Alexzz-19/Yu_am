@@ -34,21 +34,25 @@ Para ejecutar y desarrollar este proyecto en tu entorno local, asegúrate de ten
 
 ### Clonar el repositorio
 ```bash
-git clone https://github.com/TU_USUARIO/YU_AM.git
-cd YU_AM
+git clone https://github.com/Alexzz-19/Yu_am.git
+cd Yu_am
 ```
 
 ### Instalación
-Navega al directorio del frontend y descarga las dependencias:
+Instala las dependencias en los subdirectorios del proyecto:
+
 ```bash
-cd web
-npm install
+# Frontend (Next.js)
+cd web && npm install
+
+# Backend & DB (Scripts de Supabase / TypeScript)
+cd ../db && npm install
 ```
 
 ### Ejecución
 Para iniciar el servidor de desarrollo local de Next.js:
 ```bash
-npm run dev
+cd web && npm run dev
 ```
 La aplicación estará disponible en `http://localhost:3000`.
 
