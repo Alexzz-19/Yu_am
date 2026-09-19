@@ -8,3 +8,8 @@
 ## CONFIGURACIÓN DE VARIABLES DE ENTORNO (.env.local)
 - **Variables requeridas:** `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `FIGMA_ACCESS_TOKEN`.
 - **Regla estricta:** Si falta una clave visual o de Supabase, solicita actualizar únicamente `web/.env.local`. Nunca pidas credenciales del Backend.
+
+## ESTÁNDAR DE CÓDIGO
+- **Lenguaje:** TypeScript obligatorio (`.tsx` para componentes, `.ts` para utilidades/hooks).
+- **Tipado Estricto:** Prohibido el uso de `any`. Define interfaces/tipos para la telemetría (malla de sensores, estado del reactor y métricas MQ-135).
+- **Consumo Supabase:** Generar o utilizar tipos derivados directamente del esquema de Supabase (`Database['public']['Tables']['readings']['Row']`).
