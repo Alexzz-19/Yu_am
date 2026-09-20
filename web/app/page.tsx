@@ -1,5 +1,3 @@
-import Link from "next/link";
-
 export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-900 via-emerald-950 to-slate-950 text-slate-100 flex flex-col font-sans">

@@ -4,11 +4,22 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import Link from 'next/link'
 
+interface UbicacionOfuscada {
+  zona: string
+  lat: number
+  lng: number
+}
+
 interface NodoIoT {
   id: string
   nombre_nodo: string
   estado: string
-  ubicacion_ofuscada: any
+  ubicacion_ofuscada: UbicacionOfuscada
+}
+
+function getErrorMessage(err: unknown): string {
+  if (err instanceof Error) return err.message
+  return 'Error desconocido al consultar Supabase'
 }
 
 interface Telemetria {
@@ -34,15 +45,17 @@ export default function DashboardPage() {
     async function fetchNodos() {
       try {
         setLoading(true)
+        setError(null)
         const { data, error } = await supabase.from('nodos_iot').select('*')
         if (error) throw error
 
-        if (data && data.length > 0) {
-          setNodos(data)
-          setSelectedNodo(data[0].id)
+        const nodosData = (data ?? []) as NodoIoT[]
+        if (nodosData.length > 0) {
+          setNodos(nodosData)
+          setSelectedNodo(nodosData[0].id)
         } else {
           // Fallback mock node for preview if DB is empty
-          const mockNode = {
+          const mockNode: NodoIoT = {
             id: 'mock-nodo-1',
             nombre_nodo: 'Biorreactor Q’eqchi’ Alpha-1',
             estado: 'activo',
@@ -51,10 +64,12 @@ export default function DashboardPage() {
           setNodos([mockNode])
           setSelectedNodo(mockNode.id)
         }
-      } catch (err: any) {
-        console.error('Error fetching nodos:', err.message)
+      } catch (err: unknown) {
+        const message = getErrorMessage(err)
+        console.error('Error fetching nodos:', message)
+        setError(message)
         // Fallback mock node on error/auth required
-        const mockNode = {
+        const mockNode: NodoIoT = {
           id: 'mock-nodo-1',
           nombre_nodo: 'Biorreactor Q’eqchi’ Alpha-1 (Demo)',
           estado: 'activo',
@@ -123,15 +138,18 @@ export default function DashboardPage() {
 
         if (error) throw error
 
-        if (data && data.length > 0) {
-          setTelemetriaList(data)
-          setLatest(data[0])
+        const telemetriaData = (data ?? []) as Telemetria[]
+        if (telemetriaData.length > 0) {
+          setTelemetriaList(telemetriaData)
+          setLatest(telemetriaData[0])
         } else {
           setTelemetriaList([])
           setLatest(null)
         }
-      } catch (err: any) {
-        console.error('Error fetching telemetry:', err.message)
+      } catch (err: unknown) {
+        const message = getErrorMessage(err)
+        console.error('Error fetching telemetry:', message)
+        setError(message)
       }
     }
 
@@ -189,6 +207,16 @@ export default function DashboardPage() {
 
       {/* Main Content */}
       <main className="flex-1 p-6 max-w-7xl mx-auto w-full space-y-6">
+        {loading && (
+          <div className="p-4 rounded-2xl bg-slate-900/60 border border-emerald-900/40 text-sm text-emerald-300">
+            Cargando nodos y telemetría…
+          </div>
+        )}
+        {error && (
+          <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-sm text-amber-300">
+            Mostrando datos de demostración por error de conexión: {error}
+          </div>
+        )}
         {/* Top bar: Node Selector & Status */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-900/60 p-4 rounded-2xl border border-emerald-900/40 backdrop-blur shadow-xl">
           <div className="flex items-center gap-3">
