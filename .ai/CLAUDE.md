@@ -15,7 +15,8 @@
 - **`docs/`:** Documentation Subagent (SDD specs, Obsidian Vault & daily logs).
 
 ## 🛠️ Development Guidelines
-1. Follow existing project conventions and directory structure (`apps/web/`, `packages/database/`, `docs/`). AI config lives in `.ai/`.
+1. Follow existing project conventions and directory structure (`apps/web/`, `packages/database/`, `docs/`). AI config lives in `.ai/`; agent routes in `opencode.json` (`instructions` + `references`).
 2. Adhere to Privacy-by-Design principles (obfuscate IoT node coordinates in public maps).
 3. Update the daily log in `docs/obsidian/daily/` (current date) and `.ai/AGENTS.md` after significant changes.
-4. Use conventional commits (`feat:`, `fix:`, `chore:`, `docs:`).
+4. Use conventional commits with monorepo scopes (`apps/web`, `database`, `repo`).
+5. Open PRs against `main` with the checklist in `.github/PULL_REQUEST_TEMPLATE.md`; keep `lint`, `typecheck` and `test` green (husky pre-commit enforces them locally).

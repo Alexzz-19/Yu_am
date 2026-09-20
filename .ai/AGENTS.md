@@ -25,13 +25,16 @@
 ```text
 Yu_am/
 ├── .ai/                       # Configuración de IA (AGENTS.md, CLAUDE.md, CONTEXT.md)
-├── .github/workflows/ci.yml   # CI sobre apps/web
+├── .github/                   # CI (workflows/ci.yml) + PULL_REQUEST_TEMPLATE.md
+├── .husky/pre-commit          # Hook: lint-staged + tsc antes de cada commit
+├── package.json               # Raíz monorepo: lint/typecheck/test delegados
 ├── apps/
 │   └── web/                   # Aplicación Next.js (App Router) + Subagente Frontend
 ├── packages/
 │   └── database/              # Esquemas SQL y políticas de Supabase + Subagente Backend
 │       └── schema.sql
-└── docs/                      # Documentación y Obsidian Vault + Subagente Documentador
+└── docs/                      # ADRs + Obsidian Vault + Subagente Documentador
+    ├── adr/                   # Decisiones de arquitectura (0001-stack-base-y-mcp)
     ├── Informe_YUAM_Biotecnologia.pdf
     └── obsidian/
         ├── 00_Index_YUAM.md
@@ -51,9 +54,9 @@ Yu_am/
 2. **Estilo y mensajes de commit (cero "vibecoder"):**
    - Prohibidos mensajes genéricos o automáticos repetitivos.
    - Los mensajes deben ser concisos, profesionales y redactados en español claro en el cuerpo o prefijo.
-   - Utiliza verbos de acción directos y Conventional Commits (`feat:`, `fix:`, `chore:`, `docs:`). Ejemplos aceptables:
-     - `feat(web): implementar tarjetas de telemetría en el dashboard`
-     - `fix(db): corregir política RLS para lectura de sensores`
+   - Utiliza verbos de acción directos y Conventional Commits (`feat:`, `fix:`, `chore:`, `docs:`) con scopes del monorepo (`apps/web`, `database`, `repo`). Ejemplos aceptables:
+     - `feat(apps/web): implementar tarjetas de telemetría en el dashboard`
+     - `fix(database): corregir política RLS para lectura de sensores`
      - `docs: actualizar instrucciones de instalación en README`
 3. **Autonomía:**
    - Mantén el código local editable. Solo solicita o ejecuta `git push` a `main` tras verificar que los cambios compilan y funcionan correctamente.

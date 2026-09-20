@@ -75,27 +75,33 @@ Yu_am/
 - **Idioma:** español en documentación, bitácoras y mensajes de commit.
 - **Git:** un solo commit por bloque funcional completo (no triviales aislados); mensajes Conventional Commits concisos en español, cero "vibecoder"; push a `main` únicamente tras verificación local y **solo cuando el usuario lo ordena explícitamente**.
 - **Secretos:** ningún `.env` se versiona; solo plantillas `.env.example`. `opencode.json` sin claves en texto plano.
-- **Últimos hitos en `main`:** `docs(readme)` URL oficial de clonado, `docs(agentes)` directivas de Git, `ci` workflow de verificación, `fix(web)` tipos `any` y variables sin uso para CI, `refactor(core)` monorepo estándar Fase 1.
-
-## 8. Gobernanza y documentación senior (Fases 2–3 — activas)
-- **Plantilla de PR:** `.github/PULL_REQUEST_TEMPLATE.md` — exige resumen, tipo de cambio (`feat`/`fix`/`refactor`/`docs`/`chore`/`ci`), alcance por ámbito y checklist (lint + `tsc` + build limpios, sin secretos, bitácora actualizada, Conventional Commits en español).
-- **Variables de ejemplo:** `apps/web/.env.example` documenta `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` y `FIGMA_ACCESS_TOKEN` solo con placeholders, sin valores reales.
-- **Flujo:** todo cambio a `main` vía PR con checklist completo y CI en verde; commits directos a `main` solo por orden explícita del usuario.
-- **Fase 3 (README senior + ADRs):** `README.md` reescrito con badge dinámico de CI, descripción sobria, diagrama Mermaid y guía monorepo; carpeta `docs/adr/` creada con `0001-stack-base-y-mcp.md` (Contexto / Decisión / Consecuencias: Next.js + Supabase + MCP).
-
-## 9. Rigor en el código (Fase 4 — cierre del plan de modernización)
-- **Hooks pre-commit (husky + lint-staged):** `package.json` raíz con scripts `lint`/`typecheck`/`test` delegados a `apps/web`; `.husky/pre-commit` ejecuta `lint-staged` (ESLint --fix en `apps/web/**/*.{ts,tsx}` staged) y `tsc --noEmit` antes de permitir cualquier commit.
-- **Tests iniciales:** `apps/web/__tests__/smoke.test.mjs` con `node:test` (cero dependencias, `npm test`): Node >= 20, claves Supabase documentadas en `.env.example` y forma del payload MQ-135. 3/3 en verde.
-- **Cierre:** Fases 1 (monorepo) → 2 (gobernanza) → 3 (docs senior) → 4 (rigor) completadas sobre `main` salvo esta rama, integrada vía PR con CI en verde.
+- **Últimos hitos en `main`:** `docs(readme)` URL oficial de clonado, `docs(agentes)` directivas de Git, `ci` workflow de verificación, `fix(web)` tipos `any` y variables sin uso para CI, `refactor(core)` monorepo Fase 1, `chore(repo)` gobernanza Fase 2, `docs(repo)` README + ADR Fase 3, `chore(quality)` rigor Fase 4 (merge PR #1 `07a97f8`).
 
 ## 7. Puesta en marcha rápida
 
 ```bash
 git clone https://github.com/Alexzz-19/Yu_am.git
 cd Yu_am
-cd apps/web && npm install
-cd ../../packages/database && npm install
-cd ../../apps/web && npm run dev   # http://localhost:3000
+npm install --prefix apps/web
+npm install --prefix packages/database
+cp apps/web/.env.example apps/web/.env.local  # completar con valores reales
+npm run dev --prefix apps/web                 # http://localhost:3000
 ```
 
-Verificación local (en `apps/web/`): `npm run lint`, `npx tsc --noEmit`, `npm run build`.
+Verificación local: `npm run lint`, `npm run typecheck`, `npm test` (raíz, delegan a `apps/web/`).
+
+## 8. Gobernanza y documentación senior (Fases 2–3 — activas)
+- **Protección de `main` (GitHub):** PR obligatorio + status check `web` requeridos (verificado en el push de la Fase 3). El token de automatización conserva bypass de administrador: la regla se cumple operando vía PRs, no por push directo.
+- **Plantilla de PR:** `.github/PULL_REQUEST_TEMPLATE.md` — exige resumen, tipo de cambio (`feat`/`fix`/`refactor`/`docs`/`chore`/`ci`), alcance por ámbito y checklist (lint + `tsc` + build limpios, sin secretos, bitácora actualizada, Conventional Commits en español).
+- **Variables de ejemplo:** `apps/web/.env.example` documenta `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` y `FIGMA_ACCESS_TOKEN` solo con placeholders, sin valores reales.
+- **Flujo:** todo cambio a `main` vía PR con checklist completo y CI en verde; commits directos a `main` solo por orden explícita del usuario.
+- **Fase 3 (README senior + ADRs):** `README.md` reescrito con badge dinámico de CI, descripción sobria, diagrama Mermaid y guía monorepo; carpeta `docs/adr/` creada con `0001-stack-base-y-mcp.md` (Contexto / Decisión / Consecuencias: Next.js + Supabase + MCP).
+
+## 9. Rigor en el código (Fase 4 — cerrada e integrada)
+- **Hooks pre-commit (husky + lint-staged):** `package.json` raíz con scripts `lint`/`typecheck`/`test` delegados a `apps/web`; `.husky/pre-commit` ejecuta `lint-staged` (ESLint --fix en `apps/web/**/*.{ts,tsx}` staged) y `tsc --noEmit` antes de permitir cualquier commit.
+- **Tests iniciales:** `apps/web/__tests__/smoke.test.mjs` con `node:test` (cero dependencias, `npm test`): Node >= 20, claves Supabase documentadas en `.env.example` y forma del payload MQ-135. 3/3 en verde.
+- **Cierre:** Fases 1 (monorepo) → 2 (gobernanza) → 3 (docs senior) → 4 (rigor) completadas e integradas en `main` vía PR #1 (merge `07a97f8`, CI en verde).
+
+## 10. Pendientes manuales conocidos
+- **Vercel:** cambiar Root Directory a `apps/web` en el dashboard (ver `docs/INFRAESTRUCTURA_DEPLOY.md`).
+- **`apps/web/.env.local.example`:** archivo preexistente sin versionar; decidir si se conserva o se elimina (el versionado es `.env.example`).
