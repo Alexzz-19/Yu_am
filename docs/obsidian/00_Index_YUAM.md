@@ -12,10 +12,11 @@
    - [[Informe_YUAM_Biotecnologia]] (Documento Técnico Oficial)
    - [[Log_Desarrollo]] (Bitácora cronológica de cambios)
 
-2. **Módulos Técnicos**
+2. **Módulos Técnicos e Infraestructura**
    - [[Base de Datos (Supabase)]] (`db/schema.sql`)
    - [[Frontend (Next.js)]] (`web/`)
    - [[Hardware IoT (ESP32 + MQ-135)]]
+   - [[INFRAESTRUCTURA_DEPLOY]] (CI/CD y Vercel)
 
 3. **Bitácoras Diarias**
    - [[2026-09-15]] — Inicialización del proyecto y configuración base.
