@@ -75,7 +75,12 @@ Yu_am/
 - **Idioma:** español en documentación, bitácoras y mensajes de commit.
 - **Git:** un solo commit por bloque funcional completo (no triviales aislados); mensajes Conventional Commits concisos en español, cero "vibecoder"; push a `main` únicamente tras verificación local y **solo cuando el usuario lo ordena explícitamente**.
 - **Secretos:** ningún `.env` se versiona; solo plantillas `.env.example`. `opencode.json` sin claves en texto plano.
-- **Últimos hitos en `main`:** `docs(readme)` URL oficial de clonado, `docs(agentes)` directivas de Git, `ci` workflow de verificación, `fix(web)` tipos `any` y variables sin uso para CI.
+- **Últimos hitos en `main`:** `docs(readme)` URL oficial de clonado, `docs(agentes)` directivas de Git, `ci` workflow de verificación, `fix(web)` tipos `any` y variables sin uso para CI, `refactor(core)` monorepo estándar Fase 1.
+
+## 8. Gobernanza en GitHub (Fase 2 — activa)
+- **Plantilla de PR:** `.github/PULL_REQUEST_TEMPLATE.md` — exige resumen, tipo de cambio (`feat`/`fix`/`refactor`/`docs`/`chore`/`ci`), alcance por ámbito y checklist (lint + `tsc` + build limpios, sin secretos, bitácora actualizada, Conventional Commits en español).
+- **Variables de ejemplo:** `apps/web/.env.example` documenta `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` y `FIGMA_ACCESS_TOKEN` solo con placeholders, sin valores reales.
+- **Flujo:** todo cambio a `main` vía PR con checklist completo y CI en verde; commits directos a `main` solo por orden explícita del usuario.
 
 ## 7. Puesta en marcha rápida
 
