@@ -43,21 +43,21 @@ Instala las dependencias en los subdirectorios del proyecto:
 
 ```bash
 # Frontend (Next.js)
-cd web && npm install
+cd apps/web && npm install
 
 # Backend & DB (Scripts de Supabase / TypeScript)
-cd ../db && npm install
+cd ../../packages/database && npm install
 ```
 
 ### Ejecución
 Para iniciar el servidor de desarrollo local de Next.js:
 ```bash
-cd web && npm run dev
+cd apps/web && npm run dev
 ```
 La aplicación estará disponible en `http://localhost:3000`.
 
 ## 6. Variables de Entorno
-Crea un archivo `.env.local` en la raíz de la carpeta `web/` con las siguientes variables requeridas (sin incluir valores reales):
+Crea un archivo `.env.local` en la raíz de la carpeta `apps/web/` con las siguientes variables requeridas (sin incluir valores reales):
 
 ```env
 NEXT_PUBLIC_SUPABASE_URL=tu_url_de_supabase_aqui
@@ -68,10 +68,11 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=tu_clave_anonima_de_supabase_aqui
 
 ## 📂 Estructura del Repositorio
 ```text
-YU_AM/
-├── docs/           # Documentación técnica oficial y Vault de Obsidian
-├── db/             # Esquemas relacionales y políticas de Supabase (SQL)
-└── web/            # Aplicación Frontend en Next.js (App Router)
+Yu_am/
+├── .ai/                     # Configuración de IA (AGENTS.md, CLAUDE.md, CONTEXT.md)
+├── apps/web/                # Aplicación Frontend en Next.js (App Router)
+├── packages/database/       # Esquemas relacionales y políticas de Supabase (SQL)
+└── docs/                    # Documentación técnica oficial y Vault de Obsidian
 ```
 
 ## ✉️ Soporte y Contacto

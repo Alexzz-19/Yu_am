@@ -10,8 +10,8 @@
 
 ## 🤖 Arquitectura Multiagente y Responsabilidades
 - **Raíz (`/`):** Agente Orquestador Global — Gestión general, configuración de entorno (`opencode.json`), portabilidad multi-equipo y control de versiones Git.
-- **`web/`:** Subagente Frontend — Aplicación web en Next.js (App Router, TypeScript estricto, Tailwind CSS, integración Figma MCP).
-- **`db/`:** Subagente Backend — Gestión de esquemas PostgreSQL, políticas RLS, cliente Supabase y conexión PostgreSQL MCP.
+- **`apps/web/`:** Subagente Frontend — Aplicación web en Next.js (App Router, TypeScript estricto, Tailwind CSS, integración Figma MCP).
+- **`packages/database/`:** Subagente Backend — Gestión de esquemas PostgreSQL, políticas RLS, cliente Supabase y conexión PostgreSQL MCP.
 - **`docs/`:** Subagente Documentador — Especificaciones técnicas SDD, vault de Obsidian y bitácoras diarias de desarrollo.
 
 ## 🛠️ Stack Tecnológico y Repositorio Oficial
@@ -23,18 +23,20 @@
 
 ## 📂 Mapa de Carpetas
 ```text
-YU_AM/
-├── docs/
-│   ├── Informe_YUAM_Biotecnologia.pdf
-│   └── obsidian/              # Integración con Obsidian Vault
-│       ├── 00_Index_YUAM.md
-│       ├── Log_Desarrollo.md
-│       └── daily/
-│           └── 2026-09-15.md
-├── db/                        # Esquemas SQL y políticas de Supabase
-│   └── schema.sql
-└── web/                       # Aplicación Next.js (App Router)
-    └── README.md
+Yu_am/
+├── .ai/                       # Configuración de IA (AGENTS.md, CLAUDE.md, CONTEXT.md)
+├── .github/workflows/ci.yml   # CI sobre apps/web
+├── apps/
+│   └── web/                   # Aplicación Next.js (App Router) + Subagente Frontend
+├── packages/
+│   └── database/              # Esquemas SQL y políticas de Supabase + Subagente Backend
+│       └── schema.sql
+└── docs/                      # Documentación y Obsidian Vault + Subagente Documentador
+    ├── Informe_YUAM_Biotecnologia.pdf
+    └── obsidian/
+        ├── 00_Index_YUAM.md
+        ├── Log_Desarrollo.md
+        └── daily/
 ```
 
 ## 📜 Reglas de Trabajo y Convenciones

@@ -1,8 +1,22 @@
 {
   "$schema": "https://opencode.ai/config.json",
   "instructions": [
-    "AGENTS.md"
+    ".ai/AGENTS.md"
   ],
+  "references": {
+    "frontend": {
+      "path": "apps/web",
+      "description": "Subagente Frontend: aplicacion Next.js (App Router, TypeScript, Tailwind, Figma MCP)"
+    },
+    "database": {
+      "path": "packages/database",
+      "description": "Subagente Backend: esquemas PostgreSQL, RLS y cliente Supabase"
+    },
+    "project-docs": {
+      "path": "docs",
+      "description": "Subagente Documentador: specs SDD, Obsidian y bitacoras"
+    }
+  },
   "mcp": {
     "supabase": {
       "type": "local",

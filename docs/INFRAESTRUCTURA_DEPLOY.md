@@ -53,7 +53,7 @@ jobs:
 ## 3. Configuración y Despliegue en Vercel
 El frontend de YU'AM está conectado a Vercel para despliegue continuo automático:
 - **Rama de Producción:** `main`.
-- **Directorio Raíz del Proyecto (Root Directory):** `web/`.
+- **Directorio Raíz del Proyecto (Root Directory):** `apps/web/` (actualizar en el dashboard de Vercel tras la Fase 1 del monorepo).
 - **Framework Preset:** Next.js.
 
 ### Variables de Entorno Configuradas en Vercel

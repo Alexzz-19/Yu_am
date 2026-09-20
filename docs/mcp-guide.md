@@ -16,7 +16,7 @@
   `postgresql://postgres.user:pass%40word@aws-0-region.pooler.supabase.com:6543/postgres`
 
 ## 3. Manejo de Claves y Variables de Entorno (`.env`)
-- **Aislamiento:** Las credenciales, API Keys y tokens (ej. `OBSIDIAN_REST_API_KEY`, tokens de Supabase y Figma) deben residir exclusivamente en archivos `.env` locales (como `docs/.env` o `db/.env`), los cuales están excluidos mediante `.gitignore`.
+- **Aislamiento:** Las credenciales, API Keys y tokens (ej. `OBSIDIAN_REST_API_KEY`, tokens de Supabase y Figma) deben residir exclusivamente en archivos `.env` locales (como `docs/.env` o `packages/database/.env`), los cuales están excluidos mediante `.gitignore`.
 - **Regla estricta:** Nunca incluir claves secretas directamente en el código fuente, archivos de configuración compartidos ni en los commits de Git.
 - **Sincronización:** Para Obsidian y otros servicios integrados, actualizar únicamente `docs/.env` según lo requerido por el Subagente Documentador.
 
