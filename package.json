@@ -1,0 +1,21 @@
+{
+  "name": "yuam",
+  "version": "2.0.0",
+  "private": true,
+  "description": "YU'AM v2.0 — Monorepo: telemetría y control en tiempo real para fotobiorreactores",
+  "scripts": {
+    "prepare": "husky",
+    "lint": "npm run lint --prefix apps/web",
+    "typecheck": "npm run typecheck --prefix apps/web",
+    "test": "npm run test --prefix apps/web"
+  },
+  "devDependencies": {
+    "husky": "^9.1.7",
+    "lint-staged": "^15.5.2"
+  },
+  "lint-staged": {
+    "apps/web/**/*.{ts,tsx}": [
+      "eslint --fix"
+    ]
+  }
+}

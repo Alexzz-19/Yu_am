@@ -83,6 +83,11 @@ Yu_am/
 - **Flujo:** todo cambio a `main` vía PR con checklist completo y CI en verde; commits directos a `main` solo por orden explícita del usuario.
 - **Fase 3 (README senior + ADRs):** `README.md` reescrito con badge dinámico de CI, descripción sobria, diagrama Mermaid y guía monorepo; carpeta `docs/adr/` creada con `0001-stack-base-y-mcp.md` (Contexto / Decisión / Consecuencias: Next.js + Supabase + MCP).
 
+## 9. Rigor en el código (Fase 4 — cierre del plan de modernización)
+- **Hooks pre-commit (husky + lint-staged):** `package.json` raíz con scripts `lint`/`typecheck`/`test` delegados a `apps/web`; `.husky/pre-commit` ejecuta `lint-staged` (ESLint --fix en `apps/web/**/*.{ts,tsx}` staged) y `tsc --noEmit` antes de permitir cualquier commit.
+- **Tests iniciales:** `apps/web/__tests__/smoke.test.mjs` con `node:test` (cero dependencias, `npm test`): Node >= 20, claves Supabase documentadas en `.env.example` y forma del payload MQ-135. 3/3 en verde.
+- **Cierre:** Fases 1 (monorepo) → 2 (gobernanza) → 3 (docs senior) → 4 (rigor) completadas sobre `main` salvo esta rama, integrada vía PR con CI en verde.
+
 ## 7. Puesta en marcha rápida
 
 ```bash
