@@ -1,80 +1,109 @@
-# YU'AM | Biotecnología & Plataforma Digital (Versión 2.0)
+# YU'AM v2.0 — Telemetría y control en tiempo real para fotobiorreactores
 
-> Plataforma científica y tecnológica orientada a la convergencia entre la biología aplicada y el desarrollo de software de vanguardia. Término de origen **Q'eqchi'** que condensa los pilares de **"Vida, Alma y Salud"**.
-
-[![Next.js](https://img.shields.io/badge/Next.js-14+-black?style=flat&logo=next.js)](https://nextjs.org/)
+[![CI](https://github.com/Alexzz-19/Yu_am/actions/workflows/ci.yml/badge.svg)](https://github.com/Alexzz-19/Yu_am/actions/workflows/ci.yml)
+[![Next.js](https://img.shields.io/badge/Next.js-16-black?style=flat&logo=next.js)](https://nextjs.org/)
 [![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3ecf8e?style=flat&logo=supabase)](https://supabase.com/)
-[![ESP32](https://img.shields.io/badge/IoT-ESP32%20%2B%20MQ--135-blue?style=flat&logo=arduino)](https://www.espressif.com/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5_strict-blue?style=flat&logo=typescript)](https://www.typescriptlang.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
----
+> Sistema de telemetría y control en tiempo real para fotobiorreactores. Arquitectura basada en monorepo con ingesta de datos IoT y dashboard web en Next.js.
 
-## 1. Nombre del Proyecto
-- **MILAB / YU'AM** (Versión 2.0)
+## Arquitectura
 
-## 2. ¿Qué hace este proyecto?
-**YU'AM** es una plataforma científica y tecnológica que democratiza el conocimiento biotecnológico y la monitorización ambiental. Resuelve la necesidad de optimizar la captura de CO₂ y la investigación de cultivos biológicos mediante interfaces inteligentes conectadas a dispositivos IoT (ESP32 con sensor MQ-135). 
-
-Está alineado estratégicamente con el **Plan Nacional de Desarrollo K'atun 2032 de Guatemala** y los **Objetivos de Desarrollo Sostenible (ODS 3, 4, 11, 12 y 13)**.
-
-## 3. Tecnologías Usadas
-- **Frontend:** Next.js (App Router, TypeScript, Tailwind CSS, Breadcrumbs).
-- **Backend & Base de Datos:** Supabase (PostgreSQL, Autenticación, Realtime, Row Level Security).
-- **Hardware IoT:** ESP32 + Sensor MQ-135 (con búfer local ante fallas de red).
-- **Seguridad y Privacidad:** reCAPTCHA, API Keys (máx 4 por usuario), Privacy-by-Design (ofuscación de coordenadas geográficas).
-
-## 4. Requisitos Previos
-Para ejecutar y desarrollar este proyecto en tu entorno local, asegúrate de tener instalado:
-- **Node.js** (v18.0 o superior)
-- **npm** o gestor de paquetes compatible
-- **Git**
-- Cuenta y proyecto configurado en **Supabase**
-
-## 5. Cómo Instalarlo y Ejecutarlo
-
-### Clonar el repositorio
-```bash
-git clone https://github.com/Alexzz-19/Yu_am.git
-cd Yu_am
+```mermaid
+flowchart TB
+    subgraph IoT["Capa IoT"]
+        ESP32["ESP32 + MQ-135<br/>CO₂ · T° · Humedad<br/>búfer local"]
+    end
+    subgraph Mono["Monorepo Yu_am"]
+        AW["apps/web<br/>Next.js 16 · React 19<br/>Dashboard + Realtime"]
+        PDB["packages/database<br/>schema.sql · RLS<br/>clientes TS"]
+        DOCS["docs/<br/>ADRs · Obsidian"]
+    end
+    subgraph Cloud["Servicios"]
+        SUP[("Supabase<br/>PostgreSQL · Auth<br/>Realtime · RLS")]
+        VERCEL["Vercel<br/>deploy desde main"]
+        CI["GitHub Actions<br/>lint · tsc · build"]
+    end
+    ESP32 -->|"INSERT telemetría"| SUP
+    AW <-->|"supabase-js · Realtime"| SUP
+    PDB -->|"migraciones / políticas"| SUP
+    AW -->|"push a main"| CI
+    CI -->|"verde"| VERCEL
+    VERCEL -->|"sirve"| AW
 ```
 
-### Instalación
-Instala las dependencias en los subdirectorios del proyecto:
+## Estructura del monorepo
 
-```bash
-# Frontend (Next.js)
-cd apps/web && npm install
-
-# Backend & DB (Scripts de Supabase / TypeScript)
-cd ../../packages/database && npm install
-```
-
-### Ejecución
-Para iniciar el servidor de desarrollo local de Next.js:
-```bash
-cd apps/web && npm run dev
-```
-La aplicación estará disponible en `http://localhost:3000`.
-
-## 6. Variables de Entorno
-Crea un archivo `.env.local` en la raíz de la carpeta `apps/web/` con las siguientes variables requeridas (sin incluir valores reales):
-
-```env
-NEXT_PUBLIC_SUPABASE_URL=tu_url_de_supabase_aqui
-NEXT_PUBLIC_SUPABASE_ANON_KEY=tu_clave_anonima_de_supabase_aqui
-```
-
----
-
-## 📂 Estructura del Repositorio
 ```text
 Yu_am/
 ├── .ai/                     # Configuración de IA (AGENTS.md, CLAUDE.md, CONTEXT.md)
-├── apps/web/                # Aplicación Frontend en Next.js (App Router)
-├── packages/database/       # Esquemas relacionales y políticas de Supabase (SQL)
-└── docs/                    # Documentación técnica oficial y Vault de Obsidian
+├── .github/workflows/ci.yml # CI: lint + tsc + build en apps/web
+├── apps/web/                # Frontend Next.js (App Router, TS estricto, Tailwind)
+├── packages/database/       # Esquema PostgreSQL, RLS y clientes Supabase (TS)
+└── docs/                    # ADRs, guías de deploy y Vault de Obsidian
 ```
 
-## ✉️ Soporte y Contacto
+## Requisitos previos
+
+- Node.js 20.x y npm
+- Git
+- Proyecto Supabase (URL + anon key)
+
+## Instalación y ejecución local
+
+```bash
+# 1. Clonar
+git clone https://github.com/Alexzz-19/Yu_am.git
+cd Yu_am
+
+# 2. Dependencias del frontend y del backend (scripts Supabase)
+npm install --prefix apps/web
+npm install --prefix packages/database
+
+# 3. Variables de entorno del frontend
+cp apps/web/.env.example apps/web/.env.local
+# Editar apps/web/.env.local con URL y anon key reales de Supabase
+
+# 4. Servidor de desarrollo
+npm run dev --prefix apps/web
+# http://localhost:3000
+```
+
+## Verificación (puerta de entrada a `main`)
+
+```bash
+cd apps/web
+npm run lint        # ESLint, 0 errores / 0 advertencias
+npx tsc --noEmit    # TypeScript estricto, sin `any`
+npm run build       # Compilación de producción
+```
+
+Todo PR a `main` debe traer este checklist en verde (ver `.github/PULL_REQUEST_TEMPLATE.md`).
+
+## Variables de entorno
+
+| Variable | Alcance | Fuente |
+|---|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | `apps/web/.env.local` | Supabase > Project Settings > API |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | `apps/web/.env.local` | Supabase > Project Settings > API (anon) |
+| `FIGMA_ACCESS_TOKEN` | `apps/web/.env.local` (solo local) | Figma > Account Settings > Personal tokens |
+| `SUPABASE_SERVICE_ROLE_KEY` | `packages/database/.env` (nunca en cliente) | Supabase > Project Settings > API (service_role) |
+
+Ningún `.env` se versiona; solo plantillas `*.example`.
+
+## Decisiones de arquitectura (ADRs)
+
+- [`docs/adr/0001-stack-base-y-mcp.md`](docs/adr/0001-stack-base-y-mcp.md) — Next.js + Supabase + protocolo MCP.
+
+## Contexto del proyecto
+
+- **Dominio:** biotecnología e IoT ambiental (MILAB / YU'AM, "Vida, Alma y Salud" en Q'eqchi').
+- **Alineación:** Plan Nacional de Desarrollo K'atun 2032 (Guatemala), ODS 3, 4, 11, 12 y 13.
+- **Privacidad:** Privacy-by-Design — coordenadas de nodos ofuscadas en vistas públicas.
+- **Gobernanza de IA:** ver `.ai/AGENTS.md` (cerebro global) y `.ai/CONTEXT.md` (estado operativo).
+
+## Soporte
+
 - **Soporte técnico:** `bionexo_support@proton.me`
 - **Revisión de aportes:** Biblioteca YU'AM / MILAB
