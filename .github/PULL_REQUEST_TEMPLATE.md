@@ -1,32 +1,36 @@
 # Pull Request — YU'AM v2.0
 
-## Resumen del cambio
-<!-- Describe de forma concisa qué cambia y por qué. En español claro. -->
+## Description
+<!-- Concise summary of what changes and why. / Resumen conciso de qué cambia y por qué. -->
 
-## Tipo de cambio
-<!-- Marca con una `x` el tipo que corresponda. Solo uno por PR. -->
-- [ ] `feat` — Nueva funcionalidad
-- [ ] `fix` — Corrección de bug
-- [ ] `refactor` — Refactor sin cambio de comportamiento
-- [ ] `docs` — Solo documentación
-- [ ] `chore` / `ci` — Mantenimiento, dependencias o CI/CD
+## Type of change
+<!-- Check with an `x` the matching type. Only one per PR. / Marca con una `x` el tipo que corresponda. Solo uno por PR. -->
+- [ ] `feat` — New feature / Nueva funcionalidad
+- [ ] `fix` — Bug fix / Corrección de bug
+- [ ] `refactor` — Refactor without behavior change / Refactor sin cambio de comportamiento
+- [ ] `docs` — Documentation only / Solo documentación
+- [ ] `chore` / `ci` — Maintenance, dependencies or CI/CD / Mantenimiento, dependencias o CI/CD
 
-## Alcance
-<!-- Marca los ámbitos afectados. -->
-- [ ] `apps/web` (Frontend Next.js)
+## Scope / Alcance
+<!-- Check the affected areas. / Marca los ámbitos afectados. -->
+- [ ] `apps/web` (Next.js frontend)
 - [ ] `packages/database` (Supabase / PostgreSQL)
-- [ ] `docs/` (Documentación / Obsidian)
-- [ ] `.ai/` / `opencode.json` (Configuración de IA)
-- [ ] `.github/` (CI/CD y gobernanza)
+- [ ] `docs/` (Documentation / Documentación, Obsidian)
+- [ ] `.ai/` / `opencode.json` (AI configuration / Configuración de IA)
+- [ ] `.github/` (CI/CD & governance / gobernanza)
 
-## Lista de verificación
-<!-- Todo PR a `main` debe cumplir estos puntos antes de pedir revisión. -->
-- [ ] `npm run lint` en `apps/web` sin errores ni advertencias
-- [ ] `npx tsc --noEmit` en `apps/web` sin errores (TypeScript estricto, sin `any`)
-- [ ] `npm run build` en `apps/web` compila correctamente
-- [ ] Sin secretos ni claves en el diff (solo placeholders en `*.example`)
-- [ ] Bitácora actualizada en `docs/obsidian/daily/` si el cambio es relevante
-- [ ] El mensaje de merge/squash sigue Conventional Commits en español
+## Checklist
+<!-- Every PR to `main` must meet these before review. / Todo PR a `main` debe cumplir estos puntos antes de revisión. -->
+- [ ] `npm run lint` in `apps/web` passes with no errors or warnings
+- [ ] `npx tsc --noEmit` in `apps/web` passes (strict TypeScript, no `any`)
+- [ ] `npm run build` in `apps/web` compiles successfully
+- [ ] No secrets or keys in the diff (placeholders in `*.example` only)
+- [ ] Daily log updated in `docs/obsidian/daily/` if the change is relevant
+- [ ] Merge/squash message follows Conventional Commits (concise, professional)
 
-## Evidencia
-<!-- Capturas, logs de CI o pasos de verificación manual. -->
+## Related Issue
+<!-- Link the related issue, if any. / Enlaza el issue relacionado, si existe. -->
+- Closes #
+
+## Evidence
+<!-- Screenshots, CI logs or manual verification steps. / Capturas, logs de CI o pasos de verificación manual. -->
