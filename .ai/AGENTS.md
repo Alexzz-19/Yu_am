@@ -43,7 +43,7 @@ Yu_am/
 ```
 
 ## 📜 Reglas de Trabajo y Convenciones
-- **Idioma:** Español en documentación, bitácoras y comentarios clave.
+- **Idioma y dualidad (EN primario / ES secundario):** Toda documentación futura generada por agentes en este repositorio DEBE ser bilingüe: inglés como idioma primario, español como secundario (navegación cruzada con anchors o archivos espejo `*.es.md`). Bitácoras diarias y mensajes de commit permanecen en español claro según las directivas de Git.
 - **Privacidad:** Nunca exponer coordenadas reales de nodos IoT en mapas públicos (Privacy-by-Design).
 - **Actualización de Bitácora:** Al finalizar cada sesión o cambio importante, actualizar obligatoriamente `docs/obsidian/daily/YYYY-MM-DD.md` y registrarlo en este archivo.
 
