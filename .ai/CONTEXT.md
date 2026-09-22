@@ -72,7 +72,7 @@ Yu_am/
 
 ## 6. Reglas de trabajo vigentes
 
-- **Idioma:** español en documentación, bitácoras y mensajes de commit.
+- **Idioma:** documentación de agentes bilingüe obligatoria (EN primario / ES secundario, espejos `*.es.md` o anchors); bitácoras diarias y mensajes de commit en español claro.
 - **Git:** un solo commit por bloque funcional completo (no triviales aislados); mensajes Conventional Commits concisos en español, cero "vibecoder"; push a `main` únicamente tras verificación local y **solo cuando el usuario lo ordena explícitamente**.
 - **Secretos:** ningún `.env` se versiona; solo plantillas `.env.example`. `opencode.json` sin claves en texto plano.
 - **Últimos hitos en `main`:** `docs(readme)` URL oficial de clonado, `docs(agentes)` directivas de Git, `ci` workflow de verificación, `fix(web)` tipos `any` y variables sin uso para CI, `refactor(core)` monorepo Fase 1, `chore(repo)` gobernanza Fase 2, `docs(repo)` README + ADR Fase 3, `chore(quality)` rigor Fase 4 (merge PR #1 `07a97f8`).
@@ -96,6 +96,7 @@ Verificación local: `npm run lint`, `npm run typecheck`, `npm test` (raíz, del
 - **Variables de ejemplo:** `apps/web/.env.example` documenta `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` y `FIGMA_ACCESS_TOKEN` solo con placeholders, sin valores reales.
 - **Flujo:** todo cambio a `main` vía PR con checklist completo y CI en verde; commits directos a `main` solo por orden explícita del usuario.
 - **Fase 3 (README senior + ADRs):** `README.md` reescrito con badge dinámico de CI, descripción sobria, diagrama Mermaid y guía monorepo; carpeta `docs/adr/` creada con `0001-stack-base-y-mcp.md` (Contexto / Decisión / Consecuencias: Next.js + Supabase + MCP).
+- **Estándares comunitarios bilingües:** `CONTRIBUTING.md`, `SECURITY.md` (reporte a `bionexo_support@proton.me`), `CODE_OF_CONDUCT.md` (Covenant v2.1) e `ISSUE_TEMPLATE/` (`bug_report`, `feature_request`) en EN/ES; `README.md` primario en inglés con espejo `README.es.md`.
 
 ## 9. Rigor en el código (Fase 4 — cerrada e integrada)
 - **Hooks pre-commit (husky + lint-staged):** `package.json` raíz con scripts `lint`/`typecheck`/`test` delegados a `apps/web`; `.husky/pre-commit` ejecuta `lint-staged` (ESLint --fix en `apps/web/**/*.{ts,tsx}` staged) y `tsc --noEmit` antes de permitir cualquier commit.
