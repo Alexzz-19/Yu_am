@@ -105,6 +105,10 @@ Ningún `.env` se versiona; solo plantillas `*.example`.
 - **Privacidad:** Privacy-by-Design — coordenadas de nodos ofuscadas en vistas públicas.
 - **Gobernanza de IA:** ver `.ai/AGENTS.md` (cerebro global) y `.ai/CONTEXT.md` (estado operativo).
 
+## Origen y contexto
+
+YU'AM nace en Guatemala (MILAB) con raíces locales: su nombre en Q'eqchi' —"Vida, Alma y Salud"— y su alineación con el Plan Nacional de Desarrollo K'atun 2032 orientan cada decisión del proyecto. Esa base local se diseña para escalar globalmente: telemetría IoT agnóstica al despliegue, Supabase multirregión, dashboard Next.js internacionalizado (EN/ES) y gobernanza abierta lista para contribuidores de cualquier país.
+
 ## Soporte
 
 - **Soporte técnico:** `bionexo_support@proton.me`

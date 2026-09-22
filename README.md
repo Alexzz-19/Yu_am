@@ -105,6 +105,10 @@ No `.env` file is versioned; only `*.example` templates.
 - **Privacy:** Privacy-by-Design — node coordinates obfuscated in public views.
 - **AI governance:** see `.ai/AGENTS.md` (global brain) and `.ai/CONTEXT.md` (operating status).
 
+## Origin & Context
+
+YU'AM was born in Guatemala (MILAB) with deep local roots: its Q'eqchi' name —"Life, Soul and Health"— and its alignment with the K'atun 2032 National Development Plan guide every project decision. That local foundation is designed to scale globally: deployment-agnostic IoT telemetry, multi-region Supabase, an internationalized Next.js dashboard (EN/ES), and open governance ready for contributors from any country.
+
 ## Support
 
 - **Technical support:** `bionexo_support@proton.me`
