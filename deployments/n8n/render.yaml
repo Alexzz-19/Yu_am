@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: yuam-n8n-automation
+    env: docker
+    dockerfilePath: ./deployments/n8n/Dockerfile
+    plan: free
+    region: oregon
+    envVars:
+      - key: N8N_PORT
+        value: 10000
+      - key: N8N_PROTOCOL
+        value: https
+      - key: N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS
+        value: "true"
+      - key: WEBHOOK_URL
+        value: https://yuam-n8n-automation.onrender.com/
