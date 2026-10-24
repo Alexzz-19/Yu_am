@@ -1,158 +1,311 @@
-'use client'
-
 import Link from 'next/link'
-import { useState, useEffect } from 'react'
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Punto de integración Supabase
+// El Dashboard (/dashboard) ya consume telemetría en tiempo real desde
+// `telemetria_mq135`. Los tipos de abajo replican el esquema público y pueden
+// sustituirse por tipos generados: Database['public']['Tables']['readings']['Row'].
+// ─────────────────────────────────────────────────────────────────────────────
+
+type Lectura = {
+  etiqueta: string
+  valor: string
+  unidad: string
+}
+
+type Especificacion = {
+  clave: string
+  detalle: string
+}
+
+type Herramienta = {
+  nombre: string
+  descripcion: string
+  href: string
+  disponible: boolean
+  icono: string
+}
+
+const lecturas: Lectura[] = [
+  { etiqueta: 'CO₂ · MQ-135', valor: '412.5', unidad: 'ppm' },
+  { etiqueta: 'Temperatura', valor: '26.4', unidad: '°C' },
+  { etiqueta: 'pH del medio', valor: '7.2', unidad: 'pH' },
+  { etiqueta: 'O₂ disuelto', valor: '6.8', unidad: 'mg/L' },
+]
+
+const especificaciones: Especificacion[] = [
+  { clave: 'Sensado', detalle: 'ESP32 + MQ-135: CO₂, temperatura, humedad y calidad de aire.' },
+  { clave: 'Resiliencia', detalle: 'Búfer local ante fallas de red; la telemetría no se pierde.' },
+  { clave: 'Nube', detalle: 'Supabase: PostgreSQL, Realtime y Row Level Security.' },
+  { clave: 'Privacidad', detalle: 'Ofuscación de coordenadas de nodos (Privacy-by-Design).' },
+  { clave: 'Acceso', detalle: 'Autenticación segura y hasta 4 API keys por usuario.' },
+]
+
+const herramientas: Herramienta[] = [
+  {
+    nombre: 'Dashboard Telemetría',
+    descripcion: 'Monitoriza nodos, sensores y series en tiempo real.',
+    href: '/dashboard',
+    disponible: true,
+    icono: '📊',
+  },
+  {
+    nombre: 'Mapa Global',
+    descripcion: 'Nodos interactivos con ubicación ofuscada.',
+    href: '/mapa',
+    disponible: false,
+    icono: '🗺️',
+  },
+  {
+    nombre: 'Hub Científico & Buscador',
+    descripcion: 'Protocolos, papers y biblioteca biotecnológica.',
+    href: '/hub',
+    disponible: false,
+    icono: '🔬',
+  },
+  {
+    nombre: 'Calculadora de Impacto & Simulador',
+    descripcion: 'Proyecta captura de CO₂ y crecimiento del cultivo.',
+    href: '/calculadora',
+    disponible: false,
+    icono: '🧮',
+  },
+  {
+    nombre: 'DIY Hardware Studio',
+    descripcion: 'Arma tu fotobiorreactor con ESP32 y MQ-135.',
+    href: '/diy',
+    disponible: false,
+    icono: '🛠️',
+  },
+  {
+    nombre: 'Auth & Perfil de Nodo',
+    descripcion: 'Registra, autentica y gestiona tus nodos.',
+    href: '/auth',
+    disponible: false,
+    icono: '🔐',
+  },
+]
+
+const ods = ['3', '4', '11', '12', '13']
 
 export default function Home() {
-  // Simulated live metrics for initial preview dashboard
-  const [metrics, setMetrics] = useState({
-    temperature: 26.4,
-    ph: 7.2,
-    dissolvedOxygen: 6.8,
-    co2: 412.5,
-    status: 'Óptimo'
-  })
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setMetrics(prev => ({
-        temperature: +(prev.temperature + (Math.random() * 0.4 - 0.2)).toFixed(1),
-        ph: +(prev.ph + (Math.random() * 0.1 - 0.05)).toFixed(2),
-        dissolvedOxygen: +(prev.dissolvedOxygen + (Math.random() * 0.2 - 0.1)).toFixed(1),
-        co2: +(prev.co2 + (Math.random() * 2 - 1)).toFixed(1),
-        status: 'Óptimo (Activo)'
-      }))
-    }, 4000)
-    return () => clearInterval(interval)
-  }, [])
-
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
-      {/* Header / Nav */}
-      <header className="border-b border-emerald-900/40 backdrop-blur-md bg-slate-900/80 sticky top-0 z-50 px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-emerald-600 flex items-center justify-center font-bold text-xl text-white shadow-lg shadow-emerald-900/50">
-            🌱
+    <div className="min-h-screen bg-[#03110D] text-[#E8F5F0] font-sans selection:bg-emerald-500/30">
+      {/* Nav */}
+      <header className="sticky top-0 z-50 border-b border-emerald-900/40 bg-[#03110D]/80 backdrop-blur-md">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+          <div className="flex items-center gap-3">
+            <div className="grid h-9 w-9 place-items-center rounded-lg border border-emerald-500/30 bg-emerald-500/10 font-mono text-sm text-emerald-300">
+              🌱
+            </div>
+            <div className="leading-tight">
+              <span className="font-semibold tracking-tight text-emerald-300">YU&apos;AM</span>
+              <span className="block text-xs text-[#7FA79A]">fotobiorreactores en tiempo real</span>
+            </div>
           </div>
-          <div>
-            <h1 className="font-bold text-lg tracking-wide text-emerald-400">YU&apos;AM v2.0</h1>
-            <p className="text-xs text-slate-400">Biotecnología & Plataforma IoT Q&apos;eqchi&apos;</p>
-          </div>
-        </div>
-        <nav className="flex items-center gap-4 text-sm font-medium">
-          <Link href="/dashboard" className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold transition shadow-lg shadow-emerald-600/30 text-xs">
-            🚀 Ir al Dashboard IoT
+          <nav className="hidden items-center gap-6 text-sm text-[#9CC3B6] md:flex">
+            <a href="#prototipo" className="transition hover:text-emerald-300">
+              Prototipo
+            </a>
+            <a href="#impacto" className="transition hover:text-emerald-300">
+              Impacto
+            </a>
+            <a href="#herramientas" className="transition hover:text-emerald-300">
+              Herramientas
+            </a>
+          </nav>
+          <Link
+            href="/dashboard"
+            className="rounded-lg bg-emerald-500 px-4 py-2 text-sm font-medium text-[#03110D] transition hover:bg-emerald-400"
+          >
+            Dashboard
           </Link>
-        </nav>
+        </div>
       </header>
 
-      {/* Hero & Live Metrics Preview */}
-      <main className="flex-1 flex flex-col items-center px-6 py-12 max-w-6xl mx-auto w-full space-y-12">
-        {/* Intro */}
-        <div className="text-center max-w-3xl">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm mb-6 animate-pulse">
-            ✨ MILAB Guatemala • Plan K&apos;atun 2032 & ODS 3, 4, 11, 12, 13
+      <main>
+        {/* Hero */}
+        <section className="mx-auto grid max-w-6xl gap-12 px-6 py-16 md:grid-cols-[1.2fr_0.8fr] md:py-24">
+          <div className="flex flex-col justify-center">
+            <p className="mb-5 text-sm text-emerald-300/80">
+              Telemetría viva para fotobiorreactores — MILAB, Guatemala
+            </p>
+            <h1 className="max-w-xl text-4xl font-semibold leading-[1.05] tracking-tight sm:text-6xl">
+              Biotecnología que respira en tiempo real.
+            </h1>
+            <div className="mt-6 h-px w-24 bg-gradient-to-r from-emerald-400 to-transparent" />
+            <p className="mt-6 max-w-lg text-base leading-relaxed text-[#9CC3B6] sm:text-lg">
+              YU&apos;AM conecta fotobiorreactores a la nube con nodos IoT (ESP32 + MQ-135), optimiza la
+              captura de CO₂ y abre la investigación biológica a cualquier persona, con privacidad desde
+              el diseño.
+            </p>
+            <div className="mt-8 flex flex-wrap gap-4">
+              <Link
+                href="/dashboard"
+                className="rounded-lg bg-emerald-500 px-6 py-3 text-sm font-medium text-[#03110D] shadow-[0_0_40px_-12px_rgba(16,185,129,0.7)] transition hover:bg-emerald-400"
+              >
+                Ver telemetría en vivo
+              </Link>
+              <a
+                href="#prototipo"
+                className="rounded-lg border border-emerald-800/60 px-6 py-3 text-sm font-medium text-emerald-200 transition hover:border-emerald-500/60 hover:bg-emerald-500/10"
+              >
+                Conocer el prototipo v2.0
+              </a>
+            </div>
           </div>
-          
-          <h2 className="text-4xl sm:text-6xl font-extrabold tracking-tight mb-6 bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 via-teal-200 to-cyan-400">
-            Monitoreo Inteligente de Fotobiorreactores
-          </h2>
 
-          <p className="text-base sm:text-lg text-slate-300 leading-relaxed mb-8">
-            Democratizando la investigación biológica y la captura de CO₂ mediante nodos IoT con ESP32, sensores MQ-135 y arquitectura segura en Supabase con Privacy-by-Design.
-          </p>
+          {/* Reactor + instrumento */}
+          <div className="flex flex-col items-center md:items-end">
+            <div className="relative">
+              <div className="relative h-72 w-40 overflow-hidden rounded-[2.5rem] border border-emerald-500/25 bg-gradient-to-b from-[#04231C] to-[#02110D] shadow-[0_0_90px_-25px_rgba(16,185,129,0.6)]">
+                <div className="absolute inset-x-0 bottom-0 h-[62%] bg-gradient-to-t from-emerald-500/35 via-teal-400/20 to-cyan-300/10" />
+                <div className="absolute left-1/2 top-1/2 h-32 w-32 -translate-x-1/2 -translate-y-1/2 animate-pulse rounded-full bg-emerald-400/10 blur-2xl [animation-duration:5s] motion-reduce:animate-none" />
+                <div className="absolute bottom-10 left-6 h-2 w-2 animate-pulse rounded-full bg-emerald-300/70 motion-reduce:animate-none" />
+                <div className="absolute bottom-20 left-14 h-1.5 w-1.5 animate-pulse rounded-full bg-cyan-300/70 [animation-delay:1s] motion-reduce:animate-none" />
+                <div className="absolute bottom-16 left-24 h-2.5 w-2.5 animate-pulse rounded-full bg-teal-300/60 [animation-delay:2s] motion-reduce:animate-none" />
+              </div>
+              <div className="absolute -top-3 left-8 h-6 w-2 rounded-full bg-emerald-500/40" />
+              <div className="absolute -top-3 right-8 h-6 w-2 rounded-full bg-emerald-500/40" />
+            </div>
 
-          <div className="flex flex-wrap justify-center gap-4">
-            <Link href="/dashboard" className="px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 font-semibold text-white shadow-lg shadow-emerald-600/30 transition">
-              Ver Telemetría en Tiempo Real →
-            </Link>
+            <div className="mt-6 w-full max-w-xs rounded-xl border border-emerald-800/40 bg-[#04120E]/90 p-4 font-mono text-xs">
+              <p className="mb-2 text-[#4E7568]">referencia de telemetría</p>
+              {lecturas.map((lectura) => (
+                <div
+                  key={lectura.etiqueta}
+                  className="flex items-baseline justify-between border-b border-emerald-900/40 py-1.5 last:border-0"
+                >
+                  <span className="text-[#7FA79A]">{lectura.etiqueta}</span>
+                  <span className="text-emerald-300">
+                    {lectura.valor} <span className="text-[#4E7568]">{lectura.unidad}</span>
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
+        </section>
 
-        {/* Live Photobioreactor Metrics Grid */}
-        <div className="w-full bg-slate-900/80 border border-emerald-900/40 rounded-3xl p-6 sm:p-8 shadow-2xl backdrop-blur">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-6 mb-6 border-b border-emerald-900/40 gap-4">
+        {/* Visión y misión */}
+        <section className="border-t border-emerald-900/40">
+          <div className="mx-auto grid max-w-6xl gap-10 px-6 py-16 md:grid-cols-2 md:py-20">
             <div>
-              <h3 className="text-xl font-bold text-emerald-400 flex items-center gap-2">
-                <span>🧪</span> Fotobiorreactor Q&apos;eqchi&apos; Alpha-1 (Vista Previa en Vivo)
-              </h3>
-              <p className="text-xs text-slate-400">Simulación y telemetría de prueba activa para Vercel</p>
+              <h2 className="text-sm text-emerald-300/80">Visión</h2>
+              <p className="mt-4 text-2xl font-medium leading-snug text-[#E8F5F0]">
+                Democratizar el conocimiento biotecnológico y la monitorización ambiental mediante
+                interfaces inteligentes e IoT.
+              </p>
             </div>
-            <span className="px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-xs font-semibold">
-              Estado: {metrics.status}
-            </span>
+            <div>
+              <h2 className="text-sm text-emerald-300/80">Misión</h2>
+              <p className="mt-4 text-2xl font-medium leading-snug text-[#E8F5F0]">
+                Optimizar la captura de CO₂ y la investigación de cultivos biológicos con hardware
+                abierto, datos en tiempo real y ciencia reproducible.
+              </p>
+            </div>
           </div>
+        </section>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {/* Temperatura */}
-            <div className="p-5 rounded-2xl bg-slate-950/60 border border-slate-800 shadow-inner">
-              <span className="text-xs uppercase tracking-wider text-slate-400 font-semibold block mb-1">Temperatura</span>
-              <div className="text-3xl font-extrabold text-cyan-400 mb-1">
-                {metrics.temperature} <span className="text-sm font-normal text-slate-400">°C</span>
+        {/* Prototipo v2.0 */}
+        <section id="prototipo" className="border-t border-emerald-900/40">
+          <div className="mx-auto max-w-6xl px-6 py-16 md:py-20">
+            <p className="text-sm text-emerald-300/80">Prototipo v2.0</p>
+            <h2 className="mt-3 max-w-2xl text-3xl font-semibold tracking-tight sm:text-4xl">
+              Hardware abierto, nube segura, datos en vivo.
+            </h2>
+            <dl className="mt-10 divide-y divide-emerald-900/40 border-y border-emerald-900/40">
+              {especificaciones.map((spec) => (
+                <div key={spec.clave} className="grid gap-2 py-5 sm:grid-cols-[10rem_1fr] sm:gap-8">
+                  <dt className="font-mono text-sm text-emerald-300">{spec.clave}</dt>
+                  <dd className="text-[#9CC3B6]">{spec.detalle}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+        </section>
+
+        {/* Impacto CleanTech */}
+        <section id="impacto" className="border-t border-emerald-900/40">
+          <div className="mx-auto grid max-w-6xl gap-10 px-6 py-16 md:grid-cols-2 md:py-20">
+            <div>
+              <p className="text-sm text-emerald-300/80">Impacto CleanTech</p>
+              <h2 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
+                Ciencia abierta para un planeta más limpio.
+              </h2>
+            </div>
+            <div className="space-y-4 text-[#9CC3B6] leading-relaxed">
+              <p>
+                Cada nodo convierte un fotobiorreactor en una estación de investigación continua:
+                mide, persiste ante fallas y comparte datos sin exponer la ubicación de quien investiga.
+              </p>
+              <p>
+                La plataforma alinea su desarrollo con el Plan Nacional K&apos;atun 2032 de Guatemala y
+                con los Objetivos de Desarrollo Sostenible.
+              </p>
+              <div className="flex flex-wrap gap-2 pt-2">
+                {ods.map((n) => (
+                  <span
+                    key={n}
+                    className="rounded-full border border-emerald-800/50 bg-emerald-500/5 px-3 py-1 font-mono text-xs text-emerald-300"
+                  >
+                    ODS {n}
+                  </span>
+                ))}
               </div>
-              <p className="text-[11px] text-cyan-500/80">Rango óptimo: 25-28 °C</p>
-            </div>
-
-            {/* pH */}
-            <div className="p-5 rounded-2xl bg-slate-950/60 border border-slate-800 shadow-inner">
-              <span className="text-xs uppercase tracking-wider text-slate-400 font-semibold block mb-1">pH del Medio</span>
-              <div className="text-3xl font-extrabold text-emerald-400 mb-1">
-                {metrics.ph} <span className="text-sm font-normal text-slate-400">pH</span>
-              </div>
-              <p className="text-[11px] text-emerald-500/80">Estable (Buffer biológico)</p>
-            </div>
-
-            {/* Oxígeno Disuelto */}
-            <div className="p-5 rounded-2xl bg-slate-950/60 border border-slate-800 shadow-inner">
-              <span className="text-xs uppercase tracking-wider text-slate-400 font-semibold block mb-1">Oxígeno Disuelto</span>
-              <div className="text-3xl font-extrabold text-teal-300 mb-1">
-                {metrics.dissolvedOxygen} <span className="text-sm font-normal text-slate-400">mg/L</span>
-              </div>
-              <p className="text-[11px] text-teal-400/80">Alta tasa de aireación</p>
-            </div>
-
-            {/* CO2 MQ-135 */}
-            <div className="p-5 rounded-2xl bg-slate-950/60 border border-slate-800 shadow-inner">
-              <span className="text-xs uppercase tracking-wider text-slate-400 font-semibold block mb-1">CO₂ (MQ-135)</span>
-              <div className="text-3xl font-extrabold text-emerald-300 mb-1">
-                {metrics.co2} <span className="text-sm font-normal text-slate-400">PPM</span>
-              </div>
-              <p className="text-[11px] text-emerald-400/80">Captura activa de carbono</p>
             </div>
           </div>
-        </div>
+        </section>
 
-        {/* Feature Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full text-left">
-          <div className="p-6 rounded-2xl bg-slate-900/80 border border-emerald-900/40 shadow-xl backdrop-blur">
-            <div className="text-3xl mb-3">📡</div>
-            <h3 className="font-semibold text-emerald-400 text-lg mb-2">Hardware IoT ESP32</h3>
-            <p className="text-sm text-slate-400">
-              Captura continua de calidad del aire (MQ-135), temperatura y humedad con búfer local ante fallas de red.
-            </p>
+        {/* Herramientas */}
+        <section id="herramientas" className="border-t border-emerald-900/40">
+          <div className="mx-auto max-w-6xl px-6 py-16 md:py-20">
+            <p className="text-sm text-emerald-300/80">Herramientas</p>
+            <h2 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
+              Todo lo que necesitas para investigar.
+            </h2>
+            <ul className="mt-10 divide-y divide-emerald-900/40 border-y border-emerald-900/40">
+              {herramientas.map((herramienta) => (
+                <li key={herramienta.nombre}>
+                  {herramienta.disponible ? (
+                    <Link
+                      href={herramienta.href}
+                      className="group flex items-center gap-5 py-5 transition hover:bg-emerald-500/5 sm:gap-8"
+                    >
+                      <span className="text-xl">{herramienta.icono}</span>
+                      <span className="flex-1">
+                        <span className="block font-medium text-[#E8F5F0]">{herramienta.nombre}</span>
+                        <span className="block text-sm text-[#7FA79A]">{herramienta.descripcion}</span>
+                      </span>
+                      <span className="rounded-full border border-emerald-500/40 bg-emerald-500/10 px-3 py-1 text-xs text-emerald-300">
+                        Disponible
+                      </span>
+                      <span className="text-emerald-300 transition group-hover:translate-x-1">→</span>
+                    </Link>
+                  ) : (
+                    <div className="flex items-center gap-5 py-5 opacity-60 sm:gap-8">
+                      <span className="text-xl grayscale">{herramienta.icono}</span>
+                      <span className="flex-1">
+                        <span className="block font-medium text-[#E8F5F0]">{herramienta.nombre}</span>
+                        <span className="block text-sm text-[#7FA79A]">{herramienta.descripcion}</span>
+                      </span>
+                      <span className="rounded-full border border-slate-700 px-3 py-1 text-xs text-slate-400">
+                        Próximamente
+                      </span>
+                    </div>
+                  )}
+                </li>
+              ))}
+            </ul>
           </div>
-
-          <div className="p-6 rounded-2xl bg-slate-900/80 border border-emerald-900/40 shadow-xl backdrop-blur">
-            <div className="text-3xl mb-3">🔒</div>
-            <h3 className="font-semibold text-emerald-400 text-lg mb-2">Privacy-by-Design</h3>
-            <p className="text-sm text-slate-400">
-              Ofuscación automatizada de coordenadas geográficas en mapas públicos para proteger la ubicación de nodos.
-            </p>
-          </div>
-
-          <div className="p-6 rounded-2xl bg-slate-900/80 border border-emerald-900/40 shadow-xl backdrop-blur">
-            <div className="text-3xl mb-3">⚡</div>
-            <h3 className="font-semibold text-emerald-400 text-lg mb-2">Supabase Realtime</h3>
-            <p className="text-sm text-slate-400">
-              Base de datos relacional robusta con Row Level Security (RLS) y sincronización de eventos en tiempo real.
-            </p>
-          </div>
-        </div>
+        </section>
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-slate-900 px-6 py-6 text-center text-xs text-slate-500">
-        <p>© 2026 YU&apos;AM v2.0 • MILAB • Plan K&apos;atun 2032 • ODS 3, 4, 11, 12, 13</p>
+      <footer className="border-t border-emerald-900/40">
+        <div className="mx-auto flex max-w-6xl flex-col gap-2 px-6 py-8 text-xs text-[#4E7568] sm:flex-row sm:items-center sm:justify-between">
+          <p>© 2026 YU&apos;AM · MILAB · Plan K&apos;atun 2032 · ODS 3, 4, 11, 12, 13</p>
+          <p>bionexo_support@proton.me</p>
+        </div>
       </footer>
     </div>
   )
