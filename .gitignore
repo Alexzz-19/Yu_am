@@ -38,3 +38,11 @@ pnpm-debug.log*
 .env
 .env.local
 *.env
+
+# Fotos crudas / pesadas (no procesadas)
+FOTOS/
+public/FOTOS/
+*.png
+*.jpg
+*.jpeg
+!apps/web/public/images/**

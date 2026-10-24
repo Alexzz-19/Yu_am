@@ -1,5 +1,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
+import Navbar from '@/components/Navbar'
+import Footer from '@/components/Footer'
 import PhasesSection from '@/components/PhasesSection'
 
 type Especificacion = {
@@ -73,46 +75,26 @@ const ods = ['3', '4', '11', '12', '13']
 export default function Home() {
   return (
     <div className="bg-white font-sans text-slate-900 selection:bg-emerald-100">
-      {/* Header */}
-      <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/90 backdrop-blur-md">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-3">
-            <div className="grid h-9 w-9 place-items-center rounded-lg bg-emerald-600 text-sm font-semibold text-white">
-              Y
-            </div>
-            <div className="leading-tight">
-              <span className="font-semibold tracking-tight text-slate-900">YU&apos;AM</span>
-              <span className="block text-xs text-slate-500">CleanTech · Fotobiorreactores</span>
-            </div>
-          </div>
-          <nav className="hidden items-center gap-6 text-sm text-slate-600 md:flex">
-            <a href="#prototipo" className="transition hover:text-emerald-600">
-              Prototipo
-            </a>
-            <a href="#modulos" className="transition hover:text-emerald-600">
-              Módulos
-            </a>
-            <a href="#impacto" className="transition hover:text-emerald-600">
-              Impacto
-            </a>
-            <a href="#herramientas" className="transition hover:text-emerald-600">
-              Herramientas
-            </a>
-          </nav>
-          <Link
-            href="/dashboard"
-            className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-500"
-          >
-            Dashboard
-          </Link>
-        </div>
-      </header>
+      <Navbar />
 
       <main>
         {/* Hero */}
         <section className="mx-auto grid max-w-6xl items-center gap-12 px-6 py-16 md:grid-cols-2 md:py-24">
           <div>
-            <p className="text-sm font-medium text-emerald-600">CleanTech · Telemetría IoT</p>
+            <Image
+              src="/images/logos/logo-horizontal.webp"
+              alt="Logotipo oficial YU'AM"
+              width={1280}
+              height={512}
+              className="h-auto w-full max-w-xs object-contain"
+            />
+            <p className="mt-6 flex items-center gap-2 text-sm font-medium text-emerald-600">
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+              </span>
+              CleanTech · Telemetría IoT
+            </p>
             <h1 className="mt-4 max-w-xl text-4xl font-semibold leading-[1.08] tracking-tight text-slate-900 sm:text-5xl">
               Biotecnología que respira en tiempo real.
             </h1>
@@ -136,7 +118,7 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 shadow-sm">
+          <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl border border-[#E2E8F0] bg-slate-100 shadow-md">
             <Image
               src="/images/principal.webp"
               alt="Fotobiorreactor YU'AM en operación"
@@ -145,6 +127,9 @@ export default function Home() {
               sizes="(max-width: 768px) 100vw, 50vw"
               className="object-cover"
             />
+            <div className="absolute bottom-3 left-3 rounded-lg border border-slate-200 bg-white/90 px-3 py-1.5 text-xs font-medium text-slate-700 backdrop-blur">
+              📍 MILAB - Prototipo YU&apos;AM v2.0
+            </div>
           </div>
         </section>
 
@@ -265,13 +250,7 @@ export default function Home() {
         </section>
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-6xl flex-col gap-2 px-6 py-8 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between">
-          <p>© 2026 YU&apos;AM · MILAB · Plan K&apos;atun 2032 · ODS 3, 4, 11, 12, 13</p>
-          <p>bionexo_support@proton.me</p>
-        </div>
-      </footer>
+      <Footer />
     </div>
   )
 }
