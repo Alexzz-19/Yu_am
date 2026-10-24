@@ -25,6 +25,9 @@ export default function Navbar() {
           <Link href="/about" className="transition hover:text-emerald-600">
             Nosotros
           </Link>
+          <Link href="/mapa" className="transition hover:text-emerald-600">
+            Mapa
+          </Link>
           <Link href="/dashboard" className="transition hover:text-emerald-600">
             Dashboard
           </Link>

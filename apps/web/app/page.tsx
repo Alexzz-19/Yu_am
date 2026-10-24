@@ -37,7 +37,7 @@ const herramientas: Herramienta[] = [
     nombre: 'Mapa Global',
     descripcion: 'Nodos interactivos con ubicación ofuscada.',
     href: '/mapa',
-    disponible: false,
+    disponible: true,
     icono: '🗺️',
   },
   {
