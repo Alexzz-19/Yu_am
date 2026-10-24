@@ -44,7 +44,7 @@ const herramientas: Herramienta[] = [
     nombre: 'Hub Científico & Buscador',
     descripcion: 'Protocolos, papers y biblioteca biotecnológica.',
     href: '/hub',
-    disponible: false,
+    disponible: true,
     icono: '🔬',
   },
   {
