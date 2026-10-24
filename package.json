@@ -15,7 +15,7 @@
   },
   "lint-staged": {
     "apps/web/**/*.{ts,tsx}": [
-      "eslint --fix"
+      "npm run lint --prefix apps/web -- --fix"
     ]
   }
 }
