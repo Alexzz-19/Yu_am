@@ -31,6 +31,9 @@ export default function Navbar() {
           <Link href="/hub" className="transition hover:text-emerald-600">
             Hub Científico
           </Link>
+          <Link href="/simulador" className="transition hover:text-emerald-600">
+            Simulador
+          </Link>
           <Link href="/dashboard" className="transition hover:text-emerald-600">
             Dashboard
           </Link>

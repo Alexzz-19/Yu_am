@@ -50,8 +50,8 @@ const herramientas: Herramienta[] = [
   {
     nombre: 'Calculadora de Impacto & Simulador',
     descripcion: 'Proyecta captura de CO₂ y crecimiento del cultivo.',
-    href: '/calculadora',
-    disponible: false,
+    href: '/simulador',
+    disponible: true,
     icono: '🧮',
   },
   {
