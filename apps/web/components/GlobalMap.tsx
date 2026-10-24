@@ -33,7 +33,14 @@ type EstadoAire = {
   descripcion: string
 }
 
-const CENTRO: [number, number] = [14.6349, -90.5069]
+// Nodo Central — Ministerio de Educación (MINEDUC), Zona 10
+const CENTRO: [number, number] = [14.5968, -90.5103]
+const DIRECCION_CENTRAL = 'Parqueo del Ministerio de Educación, 6a. Calle 1-87, Zona 10, Ciudad de Guatemala'
+
+const LIMITES_MUNDO: [[number, number], [number, number]] = [
+  [-90, -180],
+  [90, 180],
+]
 
 const iconoCentral = L.divIcon({
   className: '',
@@ -47,6 +54,13 @@ const iconoConsulta = L.divIcon({
   html: '<div style="width:16px;height:16px;border-radius:50%;background:#0ea5e9;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.35)"></div>',
   iconSize: [16, 16],
   iconAnchor: [8, 8],
+})
+
+const iconoUsuario = L.divIcon({
+  className: '',
+  html: '<div style="width:20px;height:20px;border-radius:50%;background:#2563eb;border:3px solid #fff;box-shadow:0 0 0 5px rgba(37,99,235,0.25),0 2px 8px rgba(0,0,0,0.35)"></div>',
+  iconSize: [20, 20],
+  iconAnchor: [10, 10],
 })
 
 function fmt(value: number | null): string {
@@ -152,7 +166,7 @@ function PopupCalidad({
   return (
     <div className="min-w-[250px]">
       <p className="text-sm font-semibold text-slate-800">{titulo}</p>
-      {subtitulo && <p className="mt-0.5 font-mono text-xs text-slate-500">{subtitulo}</p>}
+      {subtitulo && <p className="mt-0.5 text-xs text-slate-500">{subtitulo}</p>}
 
       <div className={`mt-3 rounded-lg px-3 py-2 text-white ${estado.color}`}>
         <p className="text-sm font-bold">
@@ -179,6 +193,7 @@ function PopupCalidad({
 export default function GlobalMap() {
   const [calidadCentral, setCalidadCentral] = useState<CalidadAire | null>(null)
   const [puntoConsulta, setPuntoConsulta] = useState<PuntoAire | null>(null)
+  const [ubicacionUsuario, setUbicacionUsuario] = useState<PuntoAire | null>(null)
   const [objetivo, setObjetivo] = useState<ObjetivoVuelo | null>(null)
   const [cargando, setCargando] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -204,13 +219,26 @@ export default function GlobalMap() {
       setError('Tu navegador no soporta geolocalización.')
       return
     }
+    setError(null)
+    setCargando(true)
+
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         const { latitude, longitude } = pos.coords
-        setObjetivo({ lat: latitude, lng: longitude, zoom: 13 })
-        await consultar(latitude, longitude)
+        setObjetivo({ lat: latitude, lng: longitude, zoom: 16 })
+        const calidad = await fetchCalidad(latitude, longitude)
+        setCargando(false)
+        if (calidad) {
+          setUbicacionUsuario({ lat: latitude, lng: longitude, calidad })
+        } else {
+          setError('Se obtuvo tu ubicación, pero no se pudo consultar la calidad del aire.')
+        }
       },
-      () => setError('No se pudo obtener tu ubicación. Revisa los permisos del navegador.'),
+      () => {
+        setCargando(false)
+        setError('No se pudo obtener tu GPS. Verifica que el permiso de ubicación esté habilitado en el navegador.')
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
     )
   }
 
@@ -228,10 +256,21 @@ export default function GlobalMap() {
       </div>
 
       <div className="relative h-[62vh] min-h-[420px] w-full bg-slate-100">
-        <MapContainer center={CENTRO} zoom={13} className="h-full w-full" scrollWheelZoom>
+        <MapContainer
+          center={CENTRO}
+          zoom={13}
+          minZoom={3}
+          maxZoom={18}
+          worldCopyJump={false}
+          maxBounds={LIMITES_MUNDO}
+          maxBoundsViscosity={1.0}
+          className="h-full w-full"
+          scrollWheelZoom
+        >
           <TileLayer
             attribution="© Esri — World Topo Map"
             url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}"
+            noWrap
           />
           <MapEvents onClic={consultar} />
           <FlyTo objetivo={objetivo} />
@@ -241,7 +280,7 @@ export default function GlobalMap() {
               {calidadCentral ? (
                 <PopupCalidad
                   titulo="Nodo Central YU'AM v2.0"
-                  subtitulo="MILAB · Ciudad de Guatemala"
+                  subtitulo={DIRECCION_CENTRAL}
                   calidad={calidadCentral}
                 />
               ) : (
@@ -264,6 +303,22 @@ export default function GlobalMap() {
                   titulo="Calidad del aire"
                   subtitulo={`${puntoConsulta.lat.toFixed(4)}, ${puntoConsulta.lng.toFixed(4)}`}
                   calidad={puntoConsulta.calidad}
+                />
+              </Popup>
+            </Marker>
+          )}
+
+          {ubicacionUsuario && (
+            <Marker
+              position={[ubicacionUsuario.lat, ubicacionUsuario.lng]}
+              icon={iconoUsuario}
+              eventHandlers={{ add: (evento) => evento.target.openPopup() }}
+            >
+              <Popup>
+                <PopupCalidad
+                  titulo="Tu ubicación"
+                  subtitulo={`${ubicacionUsuario.lat.toFixed(4)}, ${ubicacionUsuario.lng.toFixed(4)}`}
+                  calidad={ubicacionUsuario.calidad}
                 />
               </Popup>
             </Marker>
