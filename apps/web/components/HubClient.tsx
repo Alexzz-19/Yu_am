@@ -179,9 +179,7 @@ async function buscarEPMC(query: string): Promise<{ resultados: Resultado[]; tot
 }
 
 async function buscarArxiv(query: string): Promise<{ resultados: Resultado[]; total: number }> {
-  const url = `https://export.arxiv.org/api/query?search_query=all:${encodeURIComponent(
-    query,
-  )}&start=0&max_results=12`
+  const url = `/api/arxiv?q=${encodeURIComponent(query)}`
   const res = await fetch(url)
   if (!res.ok) throw new Error('No se pudo conectar con arXiv.')
   const texto = await res.text()
