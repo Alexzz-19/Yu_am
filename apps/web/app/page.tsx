@@ -132,7 +132,7 @@ export default function Home() {
             </div>
             <div className="absolute bottom-12 right-3 flex items-end gap-2 rounded-2xl bg-white/95 p-2 shadow-lg sm:bottom-3 sm:right-4">
               <p className="max-w-28 text-xs font-medium leading-snug text-emerald-950">¡Hola! Soy Yum, tu guía en YU&apos;AM.</p>
-              <Image src="/images/yum/yum-wave.webp" alt="Yum, el robot asistente de YU'AM, saludando" width={72} height={109} className="h-20 w-auto object-contain" />
+              <Image src="/images/yum/yum-wave.webp?v=20261025-alpha" alt="Yum, el robot asistente de YU'AM, saludando" width={72} height={109} className="h-20 w-auto object-contain" />
             </div>
           </div>
         </section>

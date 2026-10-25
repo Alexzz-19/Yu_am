@@ -20,7 +20,7 @@ function RobotAvatar({ mood, size = 40 }: { mood: Mood; size?: number }) {
     sad: 'Yum triste porque no pudo responder',
     pointing: 'Yum te invita a iniciar sesión',
   }
-  return <Image src={`/images/yum/yum-${mood}.webp`} alt={descriptions[mood]} width={size} height={size} className="shrink-0 object-contain" />
+  return <Image src={`/images/yum/yum-${mood}.webp?v=20261025-alpha`} alt={descriptions[mood]} width={size} height={size} className="shrink-0 object-contain" />
 }
 
 function ChatSession({ open, onMoodChange }: { open: boolean; onMoodChange: (mood: Mood) => void }) {

@@ -106,7 +106,7 @@ export default function AboutPage() {
                 medible en tiempo real y replicable fue el origen de este prototipo.
               </p>
               <div className="flex items-center gap-5 rounded-2xl border border-emerald-100 bg-emerald-50 p-5">
-                <Image src="/images/yum/yum-perspective.webp" alt="Yum, robot asistente del proyecto MILAB YU'AM" width={82} height={120} className="h-24 w-auto shrink-0 object-contain" />
+                <Image src="/images/yum/yum-perspective.webp?v=20261025-alpha" alt="Yum, robot asistente del proyecto MILAB YU'AM" width={82} height={120} className="h-24 w-auto shrink-0 object-contain" />
                 <p className="text-sm leading-relaxed text-emerald-950">Yum acompaña esta historia como el robot asistente de MILAB: ayuda a descubrir el proyecto y a consultar sus notas científicas.</p>
               </div>
             </div>
