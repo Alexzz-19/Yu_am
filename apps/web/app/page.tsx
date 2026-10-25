@@ -130,6 +130,10 @@ export default function Home() {
             <div className="absolute bottom-3 left-3 rounded-lg border border-slate-200 bg-white/90 px-3 py-1.5 text-xs font-medium text-slate-700 backdrop-blur">
               📍 MILAB - Prototipo YU&apos;AM v2.0
             </div>
+            <div className="absolute bottom-12 right-3 flex items-end gap-2 rounded-2xl bg-white/95 p-2 shadow-lg sm:bottom-3 sm:right-4">
+              <p className="max-w-28 text-xs font-medium leading-snug text-emerald-950">¡Hola! Soy Yum, tu guía en YU&apos;AM.</p>
+              <Image src="/images/yum/yum-wave.webp" alt="Yum, el robot asistente de YU'AM, saludando" width={72} height={109} className="h-20 w-auto object-contain" />
+            </div>
           </div>
         </section>
 

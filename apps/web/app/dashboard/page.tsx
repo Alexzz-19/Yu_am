@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabaseClient'
 import Sparkline from '@/components/Sparkline'
@@ -332,6 +333,7 @@ export default function DashboardPage() {
             <h1 className="font-bold text-lg tracking-wide text-emerald-400">YU&apos;AM • Dashboard IoT</h1>
             <p className="text-xs text-[#7FA79A]">Monitoreo de biorreactores & MQ-135</p>
           </div>
+          <Image src="/images/yum/yum-working.webp" alt="Yum analiza las métricas de los sensores del reactor" width={181} height={216} className="h-10 w-auto object-contain sm:h-12" />
         </div>
 
         <div className="flex items-center gap-3">

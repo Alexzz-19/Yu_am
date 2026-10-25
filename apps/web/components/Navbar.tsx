@@ -23,7 +23,7 @@ export default function Navbar() {
           <Link href="/" className="transition hover:text-emerald-600">
             Inicio
           </Link>
-          <Link href="/about" className="transition hover:text-emerald-600">
+          <Link href="/nosotros" className="transition hover:text-emerald-600">
             Nosotros
           </Link>
           <Link href="/mapa" className="transition hover:text-emerald-600">

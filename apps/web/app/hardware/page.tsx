@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import HardwareClient from '@/components/HardwareClient'
@@ -8,14 +9,14 @@ export default function HardwarePage() {
     <div className="bg-white font-sans text-slate-900">
       <Navbar />
       <main className="mx-auto max-w-6xl px-6 py-12">
-        <p className="text-sm font-medium text-emerald-600">DIY Hardware Studio</p>
-        <h1 className="mt-3 max-w-2xl text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
-          Guía completa de replicabilidad open source.
-        </h1>
-        <p className="mt-3 max-w-2xl text-slate-600">
-          Construye tu propio fotobiorreactor YU&apos;AM con hardware abierto, firmware listo para cargar y
-          materiales reciclados de bajo costo.
-        </p>
+        <div className="flex items-center justify-between gap-6">
+          <div>
+            <p className="text-sm font-medium text-emerald-600">DIY Hardware Studio</p>
+            <h1 className="mt-3 max-w-2xl text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">Guía completa de replicabilidad open source.</h1>
+            <p className="mt-3 max-w-2xl text-slate-600">Construye tu propio fotobiorreactor YU&apos;AM con hardware abierto, firmware listo para cargar y materiales reciclados de bajo costo. Yum te acompaña con ideas para elegir los componentes.</p>
+          </div>
+          <Image src="/images/yum/yum-idea.webp" alt="Yum tiene una idea para construir el fotobiorreactor" width={181} height={234} className="h-24 w-auto shrink-0 object-contain sm:h-36" />
+        </div>
         <aside
           aria-label="Requisito de Seguridad y Estructura"
           className="mt-8 rounded-2xl border border-amber-300 bg-amber-50 p-6 text-sm leading-relaxed text-amber-950"
