@@ -54,6 +54,14 @@ export type Reading = {
   updated_at: string
 }
 
+export type BovedaMemoria = {
+  id: string
+  titulo: string
+  contenido: string
+  etiquetas: string[]
+  created_at: string
+}
+
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
 
 export type PublicNode = {
@@ -72,6 +80,7 @@ export type Database = {
       telemetria_mq135: Table<TelemetriaMq135>
       readings: Table<Reading>
       reactors: Table<Reactor>
+      boveda_memoria: Table<BovedaMemoria>
     }
     Views: { [_ in never]: never }
     Functions: {

@@ -4,8 +4,8 @@
 
 1. Copia `.env.example` a `.env.local` para desarrollo y configura los equivalentes
    en el entorno del hosting. No publiques `.env.local`. `SUPABASE_SERVICE_ROLE_KEY`
-   solo se lee en módulos de servidor. `GEMINI_API_KEY` queda documentada para el
-   servicio de IA; este módulo no la utiliza.
+   solo se lee en módulos de servidor. `GEMINI_API_KEY` se usa en `/api/chat`;
+   consulta `BOT_SETUP.md` para la bóveda de memoria.
 2. Aplica primero el esquema base `packages/database/schema.sql` si el proyecto es
    nuevo. Después ejecuta `supabase/migrations/202610250001_auth_nodes_telemetry.sql`
    desde el SQL Editor de tu proyecto Supabase. La migración se ejecuta en una
