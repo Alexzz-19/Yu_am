@@ -1,6 +1,7 @@
 import { ApiError, apiFailure, authenticated, json, readJson } from '@/lib/api-server'
-import { groundedInstruction, NO_CONTEXT_ANSWER, searchFilter, searchTerms } from '@/lib/chat-grounding'
+import { groundedInstruction, yumFallback } from '@/lib/chat-grounding'
 import type { ChatNote } from '@/lib/chat-grounding'
+import { retrieveNotes } from '@/lib/chat-retrieval'
 
 export const runtime = 'nodejs'
 
@@ -10,7 +11,7 @@ type GeminiResponse = {
 
 export async function POST(request: Request) {
   try {
-    const { client } = await authenticated(request)
+    await authenticated(request)
     const body = await readJson(request)
     if (!body || typeof body !== 'object' || Array.isArray(body)) {
       throw new ApiError(400, 'Envía una pregunta en el campo prompt.')
@@ -20,22 +21,16 @@ export async function POST(request: Request) {
       throw new ApiError(400, 'La pregunta debe tener entre 1 y 1000 caracteres.')
     }
     const question = prompt.trim()
-    const terms = searchTerms(question)
-    if (terms.length === 0) return json({ answer: NO_CONTEXT_ANSWER, sources: [] })
-
-    const { data, error } = await client.from('boveda_memoria')
-      .select('id,titulo,contenido,etiquetas')
-      .or(searchFilter(terms))
-      .limit(5)
-    if (error) throw error
-    const notes: ChatNote[] = data ?? []
-    if (notes.length === 0) return json({ answer: NO_CONTEXT_ANSWER, sources: [] })
-
     const key = process.env.GEMINI_API_KEY
-    if (!key) throw new ApiError(503, 'El asistente está pendiente de configuración.')
+    let notes: ChatNote[] = []
+    try { notes = await retrieveNotes(question, key) } catch { /* Yum mantiene la orientación contextual si falla la búsqueda. */ }
+    if (notes.length === 0) return json({ answer: yumFallback(question, []), sources: [], fallback: true })
+
+    if (!key) return json({ answer: yumFallback(question, notes), sources: notes.slice(0, 1).map(({ id, titulo, etiquetas }) => ({ id, titulo, etiquetas })), fallback: true })
     let response: Response
     try {
-      response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent', {
+      const model = process.env.GEMINI_MODEL || 'gemini-2.5-flash'
+      response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
         body: JSON.stringify({
@@ -47,9 +42,9 @@ export async function POST(request: Request) {
         cache: 'no-store',
       })
     } catch {
-      throw new ApiError(502, 'El asistente no respondió a tiempo. Inténtalo de nuevo.')
+      return json({ answer: yumFallback(question, notes), sources: notes.slice(0, 1).map(({ id, titulo, etiquetas }) => ({ id, titulo, etiquetas })), fallback: true })
     }
-    if (!response.ok) throw new ApiError(502, 'El asistente no está disponible en este momento.')
+    if (!response.ok) return json({ answer: yumFallback(question, notes), sources: notes.slice(0, 1).map(({ id, titulo, etiquetas }) => ({ id, titulo, etiquetas })), fallback: true })
     let payload: GeminiResponse
     try { payload = await response.json() as GeminiResponse } catch {
       throw new ApiError(502, 'El asistente devolvió una respuesta inválida.')

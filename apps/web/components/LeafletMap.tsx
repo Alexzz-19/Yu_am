@@ -2,7 +2,7 @@
 
 import 'leaflet/dist/leaflet.css'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import L from 'leaflet'
 import { MapContainer, Marker, TileLayer, useMap, useMapEvents } from 'react-leaflet'
 import type { Coordinates } from '@/lib/locations'
@@ -33,11 +33,15 @@ function MapPosition({ coordinates }: { coordinates: Coordinates }) {
 }
 
 function MapSelection({ onCoordinatesChange }: Pick<LeafletMapProps, 'onCoordinatesChange'>) {
+  const userDragged = useRef(false)
   const map = useMapEvents({
     click(event) {
       onCoordinatesChange({ lat: event.latlng.lat, lng: event.latlng.lng })
     },
+    dragstart() { userDragged.current = true },
     moveend() {
+      if (!userDragged.current) return
+      userDragged.current = false
       const center = map.getCenter()
       onCoordinatesChange({ lat: center.lat, lng: center.lng })
     },

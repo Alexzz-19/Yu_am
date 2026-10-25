@@ -23,7 +23,7 @@ export default function Footer() {
           <Link href="/privacidad" className="underline hover:text-emerald-700">Privacidad</Link>
           <Link href="/terminos" className="underline hover:text-emerald-700">Términos</Link>
           <CookiePreferencesButton />
-          <a href="mailto:bionexo_support@proton.me" className="hover:text-emerald-700">bionexo_support@proton.me</a>
+          <a href="mailto:Yuam_support@protonmail.com" className="hover:text-emerald-700">Yuam_support@protonmail.com</a>
         </div>
       </div>
     </footer>

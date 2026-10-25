@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/use-auth'
 import { nodeRequest } from '@/lib/node-api'
 import { supabase } from '@/lib/supabaseClient'
-import type { Database } from '@/lib/database.types'
+import type { NodeSummary } from '@/lib/database.types'
 import { LOCATION_CATALOG, countryByName, locationForCoordinates, placeByName, type Coordinates } from '@/lib/locations'
 
 const LeafletMap = dynamic(() => import('@/components/LeafletMap'), {
@@ -14,7 +14,7 @@ const LeafletMap = dynamic(() => import('@/components/LeafletMap'), {
   loading: () => <div className="mt-3 h-72 animate-pulse rounded-2xl bg-emerald-50" aria-label="Cargando mapa" />,
 })
 
-type Node = Database['public']['Tables']['nodos_iot']['Row']
+type Node = NodeSummary
 
 type NodeSecret = {
   id: string
@@ -84,6 +84,11 @@ function nodeLocationFrom(country: string, city: string): NodeLocation {
   return { country: countryByName(country).name, city: place.name, lat: place.lat, lng: place.lng }
 }
 
+function emptyNodeLocation(): NodeLocation {
+  const place = LOCATION_CATALOG[0].places[0]
+  return { country: '', city: '', lat: place.lat, lng: place.lng }
+}
+
 export default function ProfileClient() {
   const { user, loading } = useAuth()
   const router = useRouter()
@@ -93,7 +98,7 @@ export default function ProfileClient() {
   const [profile, setProfile] = useState<ProfileForm>(defaultProfile)
   const [savedProfile, setSavedProfile] = useState<ProfileForm>(defaultProfile)
   const [editsUsed, setEditsUsed] = useState(0)
-  const [nodeLocation, setNodeLocation] = useState<NodeLocation>(() => nodeLocationFrom(LOCATION_CATALOG[0].name, LOCATION_CATALOG[0].places[0].name))
+  const [nodeLocation, setNodeLocation] = useState<NodeLocation>(emptyNodeLocation)
   const [message, setMessage] = useState('')
   const [locationMessage, setLocationMessage] = useState('Selecciona una ciudad, usa tu ubicación o marca un punto aproximado en el mapa.')
   const [busy, setBusy] = useState(false)
@@ -103,7 +108,7 @@ export default function ProfileClient() {
   const [deleteConfirmed, setDeleteConfirmed] = useState(false)
 
   const selectedCountry = useMemo(() => countryByName(profile.country), [profile.country])
-  const selectedNodeCountry = useMemo(() => countryByName(nodeLocation.country), [nodeLocation.country])
+  const selectedNodeCountry = useMemo(() => nodeLocation.country ? countryByName(nodeLocation.country) : null, [nodeLocation.country])
   const profileDirty = !sameProfile(profile, savedProfile)
   const nodeReady = name.trim().length > 0 && nodeLocation.country.length > 0 && nodeLocation.city.length > 0 && Number.isFinite(nodeLocation.lat) && Number.isFinite(nodeLocation.lng)
 
@@ -125,12 +130,10 @@ export default function ProfileClient() {
         ? user.user_metadata.full_name
         : user.email?.split('@')[0] || 'Investigador YU’AM'
       const nextProfile = profileFromMetadata(user.app_metadata, fallbackName)
-      const fallbackPlace = placeByName(nextProfile.country, nextProfile.city)
       if (active) {
         setProfile(nextProfile)
         setSavedProfile(nextProfile)
         setEditsUsed(editsThisMonth(user.app_metadata))
-        setNodeLocation(nodeLocationFrom(nextProfile.country, fallbackPlace.name))
       }
       try {
         await loadNodes()
@@ -209,7 +212,7 @@ export default function ProfileClient() {
 
   async function registerNode(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (!nodeReady) {
+    if (!nodeReady || busy) {
       setMessage('Completa el nombre del nodo y selecciona una ubicación antes de registrarlo.')
       return
     }
@@ -217,16 +220,18 @@ export default function ProfileClient() {
     setMessage('')
     try {
       const result = await nodeRequest<NodeRegistration>('/api/nodes', 'POST', {
-        nombre: name.trim(),
-        zona: `${nodeLocation.city}, ${nodeLocation.country}`,
+        name: name.trim(),
+        country: nodeLocation.country,
+        city: nodeLocation.city,
         lat: nodeLocation.lat,
         lng: nodeLocation.lng,
       })
       setSecret(result)
       setNodes(current => [result.node, ...current.filter(node => node.id !== result.node.id)])
       setName('')
-      await loadNodes()
-      setMessage('¡Nodo guardado con éxito! Token generado.')
+      setNodeLocation(emptyNodeLocation())
+      setMessage('¡Nodo guardado exitosamente! Token generado.')
+      try { await loadNodes() } catch { /* El nodo confirmado sigue visible; se recargará desde Supabase. */ }
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'No se pudo registrar el nodo.')
     } finally {
@@ -322,12 +327,14 @@ export default function ProfileClient() {
           <div className="grid grid-cols-2 gap-3">
             <label className="text-sm font-bold text-slate-700">País
               <select value={nodeLocation.country} required onChange={event => changeNodeCountry(event.target.value)} className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100">
+                <option value="" disabled>Selecciona un país</option>
                 {LOCATION_CATALOG.map(country => <option key={country.name} value={country.name} disabled={country.disabled}>{country.name}</option>)}
               </select>
             </label>
             <label className="text-sm font-bold text-slate-700">{nodeLocation.country === 'Guatemala' ? 'Departamento' : 'Ciudad / zona'}
               <select value={nodeLocation.city} required onChange={event => changeNodePlace(event.target.value)} className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100">
-                {selectedNodeCountry.places.map(place => <option key={place.name}>{place.name}</option>)}
+                <option value="" disabled>Selecciona una ubicación</option>
+                {selectedNodeCountry?.places.map(place => <option key={place.name} value={place.name}>{place.name}</option>)}
               </select>
             </label>
           </div>
@@ -349,7 +356,7 @@ export default function ProfileClient() {
 
         <div className="mt-8 border-t border-slate-100 pt-6">
           <h3 className="font-bold text-slate-950">Nodos registrados</h3>
-          {nodesLoading ? <p className="mt-3 text-sm text-slate-500">Cargando nodos…</p> : nodes.length === 0 ? <p className="mt-3 text-sm text-slate-500">Aún no tienes nodos registrados.</p> : <ul className="mt-3 grid gap-3">{nodes.map(node => <li key={node.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-100 px-4 py-3"><div><p className="font-bold text-slate-900">{node.nombre_nodo}</p><p className="text-xs text-slate-500">{node.ubicacion_ofuscada?.zona ?? 'Zona sin definir'} · {node.estado}</p></div><button type="button" disabled={busy} onClick={() => rotateNode(node)} className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50">Rotar token</button></li>)}</ul>}
+          {nodesLoading ? <p className="mt-3 text-sm text-slate-500">Cargando nodos…</p> : nodes.length === 0 ? <p className="mt-3 text-sm text-slate-500">Aún no tienes nodos registrados.</p> : <ul className="mt-3 grid gap-3">{nodes.map(node => <li key={node.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-100 px-4 py-3"><div><p className="font-bold text-slate-900">{node.name}</p><p className="text-xs text-slate-500">{node.city}, {node.country}</p></div><button type="button" disabled={busy} onClick={() => rotateNode(node)} className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50">Rotar token</button></li>)}</ul>}
         </div>
       </section>
 

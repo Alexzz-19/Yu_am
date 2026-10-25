@@ -1,6 +1,6 @@
 import type { BovedaMemoria } from './database.types'
 
-export type ChatNote = Pick<BovedaMemoria, 'id' | 'titulo' | 'contenido' | 'etiquetas'>
+export type ChatNote = Pick<BovedaMemoria, 'titulo' | 'contenido'> & { id: string; etiquetas: string[] }
 
 const COMMON_WORDS = new Set([
   'que', 'qué', 'como', 'cómo', 'con', 'del', 'los', 'las', 'una', 'uno', 'para',
@@ -23,6 +23,22 @@ export function searchFilter(terms: string[]): string {
 }
 
 export const NO_CONTEXT_ANSWER = 'No encontré notas pertinentes en la bóveda de memoria para responder con certeza. Prueba una pregunta más específica.'
+
+export function yumFallback(question: string, notes: ChatNote[]): string {
+  if (notes.length > 0) {
+    const excerpt = notes[0].contenido.trim().slice(0, 280).replace(/\s+/g, ' ')
+    return `Soy Yum. Esta nota puede ayudarte: “${excerpt}” [1]. Para seguir, cuéntame qué cultivo o sensor estás usando.`
+  }
+  const topic = question.toLocaleLowerCase('es')
+  const guidance = /\bph\b|acidez|alcalin/.test(topic)
+    ? 'Para empezar con pH, calibra el sensor con soluciones patrón y registra fecha y temperatura antes de comparar lecturas.'
+    : /co2|carbono|aire|mq.?135/.test(topic)
+      ? 'Si trabajas con calidad del aire, observa tendencias y calibra el sensor según su documentación; una lectura aislada no identifica por sí sola un contaminante.'
+      : /cultiv|alga|reactor|biomasa/.test(topic)
+        ? 'En un cultivo o fotobiorreactor, anota pH, temperatura, iluminación y evolución del cultivo para detectar cambios con contexto.'
+        : 'Puedo orientarte con pH, sensores de aire, cultivos y fotobiorreactores. Formula una pregunta concreta para darte un punto de partida.'
+  return `Soy Yum. ${guidance} ¿Qué cultivo o sensor estás usando y qué cambio observaste? Orientación general para tu proyecto.`
+}
 
 export function groundedInstruction(prompt: string, notes: ChatNote[]): string {
   const context = notes.map((note, index) => ({

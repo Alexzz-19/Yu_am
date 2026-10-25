@@ -55,12 +55,25 @@ export type Reading = {
 }
 
 export type BovedaMemoria = {
-  id: string
+  id: number
   titulo: string
   contenido: string
-  etiquetas: string[]
+  etiquetas: string | null
+}
+
+export type RegisteredNode = {
+  id: string
+  user_id: string
+  name: string
+  country: string
+  city: string
+  lat: number
+  lng: number
+  token: string
   created_at: string
 }
+
+export type NodeSummary = Omit<RegisteredNode, 'token'>
 
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
 
@@ -76,6 +89,7 @@ type Table<Row> = { Row: Row; Insert: Partial<Row>; Update: Partial<Row>; Relati
 export type Database = {
   public: {
     Tables: {
+      nodes: Table<RegisteredNode>
       nodos_iot: Table<NodoIoT>
       telemetria_mq135: Table<TelemetriaMq135>
       readings: Table<Reading>

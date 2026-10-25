@@ -14,7 +14,7 @@ export default function PrivacyPage() {
     >
       <p>
         Esta política corresponde a YU&apos;AM, proyecto de tecnología ambiental del equipo MILAB. Para preguntas o solicitudes sobre datos,
-        escribe a <a href="mailto:bionexo_support@proton.me">bionexo_support@proton.me</a>. La plataforma está dirigida a personas que
+        escribe a <a href="mailto:Yuam_support@protonmail.com">Yuam_support@protonmail.com</a>. La plataforma está dirigida a personas que
         administran cultivos, nodos IoT y biorreactores.
       </p>
 
@@ -40,7 +40,8 @@ export default function PrivacyPage() {
       <p>
         La aplicación usa Supabase para autenticación y base de datos. Las sesiones se mantienen en cookies de autenticación para que el servidor
         pueda verificar las rutas privadas. Las políticas de seguridad a nivel de fila (RLS) limitan la lectura y gestión de nodos, reactores y
-        mediciones a sus propietarios; los tokens completos de los nodos se muestran una sola vez y la base almacena su hash.
+        mediciones a sus propietarios. Las rutas de nodos verifican la sesión y filtran por el propietario; los tokens se muestran al generarlos
+        y se excluyen de las listas privadas y del mapa público.
       </p>
       <p>
         Supabase, Google, Cloudflare Turnstile y Google Gemini procesan los datos que necesitan para prestar sus funciones. Estos proveedores
@@ -56,8 +57,8 @@ export default function PrivacyPage() {
       <h2>Cookies y preferencias</h2>
       <p>
         Supabase usa cookies esenciales para mantener la sesión y proteger las páginas privadas. La elección del banner se guarda en el
-        almacenamiento local del navegador bajo <code>yuam_cookie_consent</code>. Actualmente no cargamos una herramienta analítica ni cookies
-        analíticas. Si incorporamos medición opcional, solo se activará después de aceptar y se actualizará esta política. Puedes cambiar tu
+        almacenamiento local del navegador bajo <code>yuam_cookie_consent</code>. Google Analytics mide visitas y navegación únicamente después
+        de aceptar las cookies analíticas. Puedes retirar el consentimiento y cambiar tu
         elección con el enlace “Preferencias de cookies” del pie de página o borrar el almacenamiento local del navegador.
       </p>
 
@@ -81,7 +82,7 @@ export default function PrivacyPage() {
       <h2>Actualizaciones</h2>
       <p>
         Si cambian las funciones, proveedores o categorías de datos, actualizaremos esta página y su fecha de vigencia. Para consultas, utiliza
-        <a href="mailto:bionexo_support@proton.me"> bionexo_support@proton.me</a>.
+        <a href="mailto:Yuam_support@protonmail.com"> Yuam_support@protonmail.com</a>.
       </p>
     </LegalPage>
   )

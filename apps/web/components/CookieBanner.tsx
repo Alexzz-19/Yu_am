@@ -46,8 +46,8 @@ export default function CookieBanner() {
     >
       <h2 className="text-base font-semibold">Tu privacidad en YU&apos;AM</h2>
       <p className="mt-2 text-sm leading-relaxed text-slate-600">
-        Usamos almacenamiento esencial para mantener tu sesión y guardar esta preferencia. Hoy no cargamos
-        herramientas analíticas; las métricas opcionales solo se activarán con tu aceptación.
+        Usamos almacenamiento esencial para mantener tu sesión y guardar esta preferencia. Google Analytics
+        mide visitas y navegación únicamente si aceptas las cookies analíticas.
       </p>
       <p className="mt-2 text-sm text-slate-600">
         <Link href="/privacidad" className="font-medium text-emerald-800 underline">Política de privacidad</Link>

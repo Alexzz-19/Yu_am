@@ -1,4 +1,4 @@
-import { ApiError, apiFailure, authenticated, databaseFailure, generateIngestToken, json } from '@/lib/api-server'
+import { ApiError, apiFailure, authenticated, databaseFailure, generateIngestToken, json, serverSupabase } from '@/lib/api-server'
 
 export const runtime = 'nodejs'
 type Context = { params: Promise<{ id: string }> }
@@ -10,20 +10,22 @@ async function nodeId(context: Context) {
 
 export async function PATCH(request: Request, context: Context) {
   try {
-    const { client } = await authenticated(request)
+    const { user } = await authenticated(request)
     const id = await nodeId(context)
-    const { token, hash } = generateIngestToken()
-    const { error } = await client.rpc('yuam_rotate_node_token', { p_node_id: id, p_token_hash: hash })
+    const { token } = generateIngestToken()
+    const { data, error } = await serverSupabase(true).from('nodes').update({ token }).eq('id', id).eq('user_id', user.id).select('id').maybeSingle()
     if (error) databaseFailure(error)
+    if (!data) throw new ApiError(404, 'Nodo no encontrado.')
     return json({ id, token })
   } catch (error) { return apiFailure(error) }
 }
 
 export async function DELETE(request: Request, context: Context) {
   try {
-    const { client } = await authenticated(request)
-    const { error } = await client.rpc('yuam_delete_node', { p_node_id: await nodeId(context) })
+    const { user } = await authenticated(request)
+    const { data, error } = await serverSupabase(true).from('nodes').delete().eq('id', await nodeId(context)).eq('user_id', user.id).select('id').maybeSingle()
     if (error) databaseFailure(error)
+    if (!data) throw new ApiError(404, 'Nodo no encontrado.')
     return json({ deleted: true })
   } catch (error) { return apiFailure(error) }
 }

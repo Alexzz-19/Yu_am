@@ -20,7 +20,7 @@ function modules(mockClient) {
       compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
     }).outputText
     vm.runInNewContext(source, {
-      exports, Response, Request, Buffer,
+      exports, Response, Request, Buffer, URL,
       process: { env: { NEXT_PUBLIC_SUPABASE_URL: 'https://example.supabase.co', NEXT_PUBLIC_SUPABASE_ANON_KEY: 'anon-test', SUPABASE_SERVICE_ROLE_KEY: 'server-test' } },
       require: name => {
         if (name === 'server-only') return {}
@@ -103,34 +103,60 @@ describe('gestión de nodos', () => {
     assert.equal((await anonymous.POST(request({}))).status, 401)
   })
 
-  it('crea tokens distintos y solo guarda hashes; redondea ubicación antes de guardarla', async () => {
+  it('inserta en nodes con propietario validado y tokens únicos; redondea ubicación', async () => {
     const calls = []
     const route = modules({
       auth: { getUser: async () => ({ data: { user: { id: 'owner' } }, error: null }) },
-      rpc: async (name, input) => { calls.push({ name, input }); return { data: 'node-1', error: null } },
+      from: table => {
+        assert.equal(table, 'nodes')
+        return { insert: input => { calls.push(input); return { select: columns => { assert.ok(!columns.split(',').includes('token')); return { single: async () => ({ data: { id: 'node-1', user_id: input.user_id, name: input.name }, error: null }) } } } } }
+      },
     })('app/api/nodes/route.ts')
-    const body = { nombre: ' Cultivo ', zona: ' Guatemala ', lat: 14.5968, lng: -90.5103 }
+    const body = { name: ' Cultivo ', country: 'Guatemala', city: 'Guatemala', lat: 14.5968, lng: -90.5103 }
     const first = await route.POST(request(body)); const one = await first.json()
     const second = await route.POST(request(body)); const two = await second.json()
     assert.equal(first.status, 201); assert.equal(second.status, 201)
     assert.match(one.token, /^yua_live_[a-f0-9]{64}$/)
     assert.notEqual(one.token, two.token)
-    assert.ok(!JSON.stringify(calls).includes(one.token))
-    assert.equal(calls[0].input.p_lat, 14.6); assert.equal(calls[0].input.p_lng, -90.51)
-    assert.equal(calls[0].input.p_name, 'Cultivo')
+    assert.equal(calls[0].user_id, 'owner')
+    assert.equal(calls[0].lat, 14.6); assert.equal(calls[0].lng, -90.51)
+    assert.equal(calls[0].name, 'Cultivo')
+    assert.equal(calls[0].token, one.token)
+  })
+
+  it('no confirma un alta si Supabase rechaza la inserción', async () => {
+    let input
+    const route = modules({
+      auth: { getUser: async () => ({ data: { user: { id: 'owner-id', is_anonymous: false } }, error: null }) },
+      from: () => ({ insert: payload => { input = payload; return { select: () => ({ single: async () => ({ data: null, error: { code: '42501' } }) }) } } }),
+    })('app/api/nodes/route.ts')
+    const response = await route.POST(request({ name: 'Cultivo comunitario', country: 'Guatemala', city: 'Petén', lat: 16.9226, lng: -89.892 }))
+    assert.equal(response.status, 403)
+    const result = await response.json()
+    assert.equal(input.user_id, 'owner-id')
+    assert.equal(input.name, 'Cultivo comunitario')
+    assert.equal(input.city, 'Petén')
+    assert.equal(input.lat, 16.92)
+    assert.ok(!result.token)
   })
 
   it('rechaza nombres vacíos y coordenadas fuera del mundo', () => {
     const { parseNode } = modules({})('lib/telemetry-validation.ts')
-    for (const body of [{ nombre: '', zona: 'X', lat: 0, lng: 0 }, { nombre: 'X', zona: 'Y', lat: 91, lng: 0 }, { nombre: 'X', zona: 'Y', lat: 0, lng: -181 }]) {
+    for (const body of [{ nombre: '', zona: 'X', lat: 0, lng: 0 }, { nombre: 'X', zona: 'Y', lat: 91, lng: 0 }, { nombre: 'X', zona: 'Y', lat: 0, lng: -181 }, { name: 'X', country: '', city: 'Guatemala', lat: 14, lng: -90 }, { name: 'X', country: 'Guatemala', city: '', lat: 14, lng: -90 }, { name: 'X', country: 'Guatemala', city: 'Guatemala', user_id: 'other', lat: 14, lng: -90 }]) {
       assert.throws(() => parseNode(body))
     }
+    const structured = parseNode({ name: ' Sensor ', country: 'Guatemala', city: 'Petén', lat: 16.9226, lng: -89.892 })
+    assert.equal(structured.nombre, 'Sensor')
+    assert.equal(structured.zona, 'Petén, Guatemala')
   })
 
   it('mantiene el control de propiedad en rotación y borrado', async () => {
     const route = modules({
       auth: { getUser: async () => ({ data: { user: { id: 'other-owner' } }, error: null }) },
-      rpc: async () => ({ data: null, error: { code: 'P0002' } }),
+      from: () => {
+        const query = { eq: (column, value) => { if (column === 'user_id') assert.equal(value, 'other-owner'); return query }, select: () => query, maybeSingle: async () => ({ data: null, error: null }) }
+        return { update: () => query, delete: () => query }
+      },
     })('app/api/nodes/[id]/route.ts')
     const context = { params: Promise.resolve({ id: '11111111-1111-4111-8111-111111111111' }) }
     assert.equal((await route.PATCH(request({}), context)).status, 404)

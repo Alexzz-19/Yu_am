@@ -79,7 +79,7 @@ export default function TermsPage() {
       <h2>Cambios y contacto</h2>
       <p>
         Podemos actualizar estas condiciones al cambiar el servicio. Publicaremos la versión vigente en esta página. Las consultas relacionadas con
-        cuentas, nodos o estas condiciones se reciben en <a href="mailto:bionexo_support@proton.me">bionexo_support@proton.me</a>.
+        cuentas, nodos o estas condiciones se reciben en <a href="mailto:Yuam_support@protonmail.com">Yuam_support@protonmail.com</a>.
       </p>
       <p>
         Estas condiciones se interpretan conforme a la normativa aplicable en Guatemala. No restringen derechos que no puedan limitarse por acuerdo.

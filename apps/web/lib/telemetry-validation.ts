@@ -1,5 +1,5 @@
 export type TelemetryInput = { co2_ppm: number | null; ph: number | null; temperatura: number | null }
-export type NodeInput = { nombre: string; zona: string; lat: number; lng: number }
+export type NodeInput = { nombre: string; zona: string; country: string | null; city: string | null; lat: number; lng: number }
 
 function object(value: unknown): Record<string, unknown> {
   if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('Se requiere un objeto JSON.')
@@ -29,11 +29,17 @@ export function parseTelemetry(value: unknown): TelemetryInput {
 
 export function parseNode(value: unknown): NodeInput {
   const data = object(value)
-  const nombre = typeof data.nombre === 'string' ? data.nombre.trim() : ''
-  const zona = typeof data.zona === 'string' ? data.zona.trim() : ''
+  if ('user_id' in data || 'token' in data) throw new Error('La identidad y el token se asignan en el servidor.')
+  // Se conserva el formato anterior para clientes ya publicados.
+  const structured = 'name' in data || 'country' in data || 'city' in data
+  const nombre = typeof (structured ? data.name : data.nombre) === 'string' ? String(structured ? data.name : data.nombre).trim() : ''
+  const country = typeof data.country === 'string' ? data.country.trim() : ''
+  const city = typeof data.city === 'string' ? data.city.trim() : ''
+  const zona = structured ? `${city}, ${country}` : typeof data.zona === 'string' ? data.zona.trim() : ''
   if (!nombre || nombre.length > 100) throw new Error('El nombre debe tener entre 1 y 100 caracteres.')
+  if (structured && (!country || country.length > 80 || !city || city.length > 100)) throw new Error('Selecciona país y ciudad o departamento válidos.')
   if (!zona || zona.length > 150) throw new Error('La ubicación debe tener entre 1 y 150 caracteres.')
-  return { nombre, zona, lat: Math.round(numeric(data.lat, -90, 90, 'Latitud') * 100) / 100,
+  return { nombre, zona, country: structured ? country : null, city: structured ? city : null, lat: Math.round(numeric(data.lat, -90, 90, 'Latitud') * 100) / 100,
     lng: Math.round(numeric(data.lng, -180, 180, 'Longitud') * 100) / 100 }
 }
 
