@@ -57,8 +57,8 @@ const herramientas: Herramienta[] = [
   {
     nombre: 'DIY Hardware Studio',
     descripcion: 'Arma tu fotobiorreactor con ESP32 y MQ-135.',
-    href: '/diy',
-    disponible: false,
+    href: '/hardware',
+    disponible: true,
     icono: '🛠️',
   },
   {

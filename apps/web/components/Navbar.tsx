@@ -34,6 +34,9 @@ export default function Navbar() {
           <Link href="/simulador" className="transition hover:text-emerald-600">
             Simulador
           </Link>
+          <Link href="/hardware" className="transition hover:text-emerald-600">
+            Hardware
+          </Link>
           <Link href="/dashboard" className="transition hover:text-emerald-600">
             Dashboard
           </Link>
