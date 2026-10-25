@@ -64,8 +64,8 @@ const herramientas: Herramienta[] = [
   {
     nombre: 'Auth & Perfil de Nodo',
     descripcion: 'Registra, autentica y gestiona tus nodos.',
-    href: '/auth',
-    disponible: false,
+    href: '/login',
+    disponible: true,
     icono: '🔐',
   },
 ]

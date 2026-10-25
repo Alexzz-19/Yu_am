@@ -5,6 +5,7 @@ import 'leaflet/dist/leaflet.css'
 import { useEffect, useState } from 'react'
 import { MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from 'react-leaflet'
 import L from 'leaflet'
+import type { PublicNode } from '@/lib/database.types'
 
 type CalidadAire = {
   pm10: number | null
@@ -191,6 +192,8 @@ function PopupCalidad({
 }
 
 export default function GlobalMap() {
+  const [nodes, setNodes] = useState<PublicNode[]>([])
+  const [nodesError, setNodesError] = useState('')
   const [calidadCentral, setCalidadCentral] = useState<CalidadAire | null>(null)
   const [puntoConsulta, setPuntoConsulta] = useState<PuntoAire | null>(null)
   const [ubicacionUsuario, setUbicacionUsuario] = useState<PuntoAire | null>(null)
@@ -200,6 +203,24 @@ export default function GlobalMap() {
 
   useEffect(() => {
     fetchCalidad(CENTRO[0], CENTRO[1]).then(setCalidadCentral)
+  }, [])
+
+  useEffect(() => {
+    const controller = new AbortController()
+    let current = true
+    async function refreshNodes() {
+      try {
+        const response = await fetch('/api/nodes/public', { cache: 'no-store', signal: controller.signal })
+        if (!response.ok) throw new Error('No se pudieron cargar los nodos de la comunidad.')
+        const data: { nodes: PublicNode[] } = await response.json()
+        if (current) { setNodes(data.nodes); setNodesError('') }
+      } catch {
+        if (current) setNodesError('Los nodos de la comunidad no están disponibles en este momento.')
+      }
+    }
+    void refreshNodes()
+    const timer = setInterval(refreshNodes, 30000)
+    return () => { current = false; clearInterval(timer); controller.abort() }
   }, [])
 
   async function consultar(lat: number, lng: number) {
@@ -274,6 +295,12 @@ export default function GlobalMap() {
           />
           <MapEvents onClic={consultar} />
           <FlyTo objetivo={objetivo} />
+
+          {nodes.filter(node => Number.isFinite(node.ubicacion_ofuscada.lat) && Number.isFinite(node.ubicacion_ofuscada.lng)).map(node => (
+            <Marker key={node.id} position={[node.ubicacion_ofuscada.lat!, node.ubicacion_ofuscada.lng!]} icon={node.estado === 'activo' ? iconoCentral : iconoConsulta}>
+              <Popup><div className="min-w-[200px]"><p className="font-semibold">{node.nombre_nodo}</p><p>{node.ubicacion_ofuscada.zona}</p><p className="mt-2">{node.estado === 'activo' ? '🟢 Activo' : 'Sin lecturas recientes'}</p><p className="mt-1 text-xs">{node.ultimo_envio ? `Última lectura: ${new Date(node.ultimo_envio).toLocaleString()}` : 'Esperando la primera lectura'}</p><p className="mt-1 text-xs">Ubicación aproximada. Se actualiza cada 30 segundos.</p></div></Popup>
+            </Marker>
+          ))}
 
           <Marker position={CENTRO} icon={iconoCentral}>
             <Popup>
@@ -357,6 +384,7 @@ export default function GlobalMap() {
           </div>
         )}
       </div>
+      {nodesError && <p role="status" className="border-t border-amber-200 bg-amber-50 px-5 py-3 text-sm text-amber-900">{nodesError}</p>}
     </div>
   )
 }

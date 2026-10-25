@@ -8,8 +8,7 @@ import Sparkline from '@/components/Sparkline'
 import type { NodoIoT, TelemetriaMq135, Reactor, Reading, UbicacionOfuscada } from '@/lib/database.types'
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Auth (Supabase): Google OAuth queda preparado. Requiere habilitar el provider
-// "Google" en Supabase Auth > Providers y añadir el redirect URL del sitio.
+// Auth (Supabase): el acceso se centraliza en /login.
 // ─────────────────────────────────────────────────────────────────────────────
 
 function getErrorMessage(err: unknown): string {
@@ -56,6 +55,7 @@ function mockTelemetria(nodoId: string): TelemetriaMq135[] {
     id,
     nodo_id: nodoId,
     ppm_co2,
+    ph: null,
     calidad_aire,
     temperatura,
     humedad,
@@ -136,15 +136,6 @@ export default function DashboardPage() {
     return () => subscription.unsubscribe()
   }, [])
 
-  async function signInWithGoogle() {
-    setError(null)
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: `${window.location.origin}/dashboard` },
-    })
-    if (error) setError(error.message)
-  }
-
   async function signOut() {
     const { error } = await supabase.auth.signOut()
     if (error) setError(error.message)
@@ -186,6 +177,7 @@ export default function DashboardPage() {
   // ── Telemetría MQ-135 + Realtime ──
   useEffect(() => {
     if (!selectedNodo) return
+    const nodoId = selectedNodo
 
     async function fetchTelemetria() {
       if (selectedNodo?.startsWith('mock-')) {
@@ -197,7 +189,7 @@ export default function DashboardPage() {
         const { data, error } = await supabase
           .from('telemetria_mq135')
           .select('*')
-          .eq('nodo_id', selectedNodo)
+          .eq('nodo_id', nodoId)
           .order('created_at', { ascending: false })
           .limit(20)
 
@@ -263,6 +255,7 @@ export default function DashboardPage() {
   // ── Lecturas del reactor (pH, O₂, temperatura) + Realtime ──
   useEffect(() => {
     if (!selectedReactor) return
+    const reactorId = selectedReactor
 
     async function fetchReadings() {
       if (selectedReactor?.startsWith('mock-')) {
@@ -274,7 +267,7 @@ export default function DashboardPage() {
         const { data, error } = await supabase
           .from('readings')
           .select('*')
-          .eq('reactor_id', selectedReactor)
+          .eq('reactor_id', reactorId)
           .order('created_at', { ascending: false })
           .limit(20)
 
@@ -358,13 +351,12 @@ export default function DashboardPage() {
               </button>
             </div>
           ) : (
-            <button
-              type="button"
-              onClick={signInWithGoogle}
+            <Link
+              href="/login"
               className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-xs font-semibold text-white transition shadow-lg shadow-emerald-600/30"
             >
-              Conectar con Google
-            </button>
+              Iniciar sesión
+            </Link>
           )}
         </div>
       </header>

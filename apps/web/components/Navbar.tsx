@@ -1,5 +1,6 @@
 import Image from 'next/image'
 import Link from 'next/link'
+import AuthNavLink from './AuthNavLink'
 
 export default function Navbar() {
   return (
@@ -41,12 +42,7 @@ export default function Navbar() {
             Dashboard
           </Link>
         </nav>
-        <Link
-          href="/dashboard"
-          className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-500"
-        >
-          Dashboard
-        </Link>
+        <AuthNavLink />
       </div>
     </header>
   )
