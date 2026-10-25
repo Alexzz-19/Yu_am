@@ -97,8 +97,8 @@ export default function ChatBotWidget() {
   const [open, setOpen] = useState(false)
   const [mood, setMood] = useState<Mood>('idle')
   const { user, loading } = useAuth()
-  return <aside className="fixed bottom-4 right-4 z-[60] flex flex-col items-end gap-3 print:hidden" aria-label="Asistente de YU’AM">
-    <section id="yuam-chat-panel" role="dialog" aria-label="Asistente de YU’AM" aria-hidden={!open} className={`${open ? 'flex' : 'hidden'} h-[min(34rem,calc(100dvh-7rem))] w-[calc(100vw-2rem)] max-w-sm flex-col overflow-hidden rounded-2xl border border-emerald-200 bg-white shadow-2xl sm:w-96`}>
+  return <aside className="fixed bottom-4 right-4 z-[9999] flex flex-col items-end gap-3 print:hidden" aria-label="Asistente de YU’AM">
+    <section id="yuam-chat-panel" role="dialog" aria-label="Asistente de YU’AM" aria-hidden={!open} className={`${open ? 'flex' : 'hidden'} z-[9999] h-[min(34rem,calc(100dvh-7rem))] w-[calc(100vw-2rem)] max-w-sm flex-col overflow-hidden rounded-2xl border border-emerald-200 bg-white shadow-2xl sm:w-96`}>
       <div className="flex items-center gap-3 bg-emerald-950 px-4 py-3 text-white">
         <RobotAvatar mood={loading ? 'working' : !user ? 'pointing' : mood} />
         <div className="min-w-0 flex-1"><h2 className="font-semibold">Bot YU&apos;AM</h2><p className="text-xs text-emerald-100">Tu guía desde la bóveda de memoria</p></div>
@@ -110,7 +110,7 @@ export default function ChatBotWidget() {
         <Link href="/login" onClick={() => setOpen(false)} className="rounded-xl bg-emerald-700 px-4 py-3 text-sm font-semibold text-white hover:bg-emerald-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700">Iniciar sesión</Link>
       </div>}
     </section>
-    <button type="button" onClick={() => setOpen(value => !value)} aria-expanded={open} aria-controls="yuam-chat-panel" className="flex items-center gap-2 rounded-full bg-emerald-800 px-4 py-2.5 text-sm font-semibold text-white shadow-lg hover:bg-emerald-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700">
+    <button type="button" onClick={() => setOpen(value => !value)} aria-expanded={open} aria-controls="yuam-chat-panel" className="z-[9999] flex items-center gap-2 rounded-full bg-emerald-800 px-4 py-2.5 text-sm font-semibold text-white shadow-lg hover:bg-emerald-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700">
       <RobotAvatar mood={loading ? 'working' : !user ? 'pointing' : mood} size={30} /><span>{open ? 'Ocultar chat' : 'Preguntar a Yum'}</span>
     </button>
   </aside>

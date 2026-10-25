@@ -105,6 +105,7 @@ export default function ProfileClient() {
   const selectedCountry = useMemo(() => countryByName(profile.country), [profile.country])
   const selectedNodeCountry = useMemo(() => countryByName(nodeLocation.country), [nodeLocation.country])
   const profileDirty = !sameProfile(profile, savedProfile)
+  const nodeReady = name.trim().length > 0 && nodeLocation.country.length > 0 && nodeLocation.city.length > 0 && Number.isFinite(nodeLocation.lat) && Number.isFinite(nodeLocation.lng)
 
   const loadNodes = useCallback(async () => {
     const result = await nodeRequest<{ nodes: Node[] }>('/api/nodes')
@@ -208,11 +209,15 @@ export default function ProfileClient() {
 
   async function registerNode(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    if (!nodeReady) {
+      setMessage('Completa el nombre del nodo y selecciona una ubicación antes de registrarlo.')
+      return
+    }
     setBusy(true)
     setMessage('')
     try {
       const result = await nodeRequest<NodeRegistration>('/api/nodes', 'POST', {
-        nombre: name.trim() || `Nodo ${nodeLocation.city}`,
+        nombre: name.trim(),
         zona: `${nodeLocation.city}, ${nodeLocation.country}`,
         lat: nodeLocation.lat,
         lng: nodeLocation.lng,
@@ -221,7 +226,7 @@ export default function ProfileClient() {
       setNodes(current => [result.node, ...current.filter(node => node.id !== result.node.id)])
       setName('')
       await loadNodes()
-      setMessage('Nodo registrado. Guarda su token antes de cerrar esta pantalla.')
+      setMessage('¡Nodo guardado con éxito! Token generado.')
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'No se pudo registrar el nodo.')
     } finally {
@@ -312,16 +317,16 @@ export default function ProfileClient() {
         </div>
         <form onSubmit={registerNode} className="mt-6 grid gap-4 lg:grid-cols-2">
           <label className="text-sm font-bold text-slate-700">Nombre del nodo
-            <input value={name} onChange={event => setName(event.target.value)} maxLength={80} placeholder={`Ej. Laboratorio ${nodeLocation.city}`} className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100" />
+            <input value={name} onChange={event => setName(event.target.value)} required maxLength={80} placeholder={`Ej. Laboratorio ${nodeLocation.city}`} className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100" />
           </label>
           <div className="grid grid-cols-2 gap-3">
             <label className="text-sm font-bold text-slate-700">País
-              <select value={nodeLocation.country} onChange={event => changeNodeCountry(event.target.value)} className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100">
+              <select value={nodeLocation.country} required onChange={event => changeNodeCountry(event.target.value)} className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100">
                 {LOCATION_CATALOG.map(country => <option key={country.name} value={country.name} disabled={country.disabled}>{country.name}</option>)}
               </select>
             </label>
             <label className="text-sm font-bold text-slate-700">{nodeLocation.country === 'Guatemala' ? 'Departamento' : 'Ciudad / zona'}
-              <select value={nodeLocation.city} onChange={event => changeNodePlace(event.target.value)} className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100">
+              <select value={nodeLocation.city} required onChange={event => changeNodePlace(event.target.value)} className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100">
                 {selectedNodeCountry.places.map(place => <option key={place.name}>{place.name}</option>)}
               </select>
             </label>
@@ -335,7 +340,8 @@ export default function ProfileClient() {
             <p className="mt-2 text-xs text-slate-500">Ubicación elegida: {nodeLocation.lat.toFixed(4)}, {nodeLocation.lng.toFixed(4)}.</p>
           </div>
           <div className="lg:col-span-2">
-            <button type="submit" disabled={busy} className="rounded-xl bg-slate-950 px-5 py-3 text-sm font-bold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50">{busy ? 'Registrando…' : 'Registrar nodo'}</button>
+            {!nodeReady && <p role="alert" className="mb-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">Ingresa un nombre y selecciona país y departamento o ciudad para registrar el nodo.</p>}
+            <button type="submit" disabled={busy || !nodeReady} className="rounded-xl bg-slate-950 px-5 py-3 text-sm font-bold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50">{busy ? 'Registrando…' : 'Registrar nodo'}</button>
           </div>
         </form>
 

@@ -1,10 +1,15 @@
-import { apiFailure, authenticated, databaseFailure, generateIngestToken, json, readJson, ApiError } from '@/lib/api-server'
+import { apiFailure, authenticated, databaseFailure, generateIngestToken, json, readJson, ApiError, serverSupabase } from '@/lib/api-server'
 import { parseNode } from '@/lib/telemetry-validation'
 
 export const runtime = 'nodejs'
 
 export async function GET(request: Request) {
   try {
+    if (new URL(request.url).searchParams.get('scope') === 'community') {
+      const { data, error } = await serverSupabase().rpc('yuam_public_nodes')
+      if (error) databaseFailure(error)
+      return json({ nodes: data })
+    }
     const { client, user } = await authenticated(request)
     const { data, error } = await client.from('nodos_iot').select('*').eq('usuario_id', user.id).order('created_at', { ascending: false })
     if (error) databaseFailure(error)

@@ -200,7 +200,6 @@ function PopupCalidad({
 
 export default function GlobalMap() {
   const [nodes, setNodes] = useState<PublicNode[]>([])
-  const [nodesError, setNodesError] = useState('')
   const [calidadCentral, setCalidadCentral] = useState<CalidadAire | null>(null)
   const [puntoConsulta, setPuntoConsulta] = useState<PuntoAire | null>(null)
   const [ubicacionUsuario, setUbicacionUsuario] = useState<PuntoAire | null>(null)
@@ -217,12 +216,12 @@ export default function GlobalMap() {
     let current = true
     async function refreshNodes() {
       try {
-        const response = await fetch('/api/nodes/public', { cache: 'no-store', signal: controller.signal })
+        const response = await fetch('/api/nodes?scope=community', { cache: 'no-store', signal: controller.signal })
         if (!response.ok) throw new Error('No se pudieron cargar los nodos de la comunidad.')
         const data: { nodes: PublicNode[] } = await response.json()
-        if (current) { setNodes(data.nodes); setNodesError('') }
+        if (current) setNodes(data.nodes)
       } catch {
-        if (current) setNodesError('Los nodos de la comunidad no están disponibles en este momento.')
+        if (current) setNodes([])
       }
     }
     void refreshNodes()
@@ -391,7 +390,6 @@ export default function GlobalMap() {
           </div>
         )}
       </div>
-      {nodesError && <p role="status" className="border-t border-amber-200 bg-amber-50 px-5 py-3 text-sm text-amber-900">{nodesError}</p>}
     </div>
   )
 }
