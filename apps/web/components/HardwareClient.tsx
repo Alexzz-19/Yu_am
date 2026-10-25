@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 
 type FirmwareId = 'arduino' | 'esp32'
 type TipoAlga = 'chlorella' | 'spirulina' | 'scenedesmus'
@@ -42,8 +43,8 @@ type ItemCableado = {
   icono: string
   nombre: string
   detalle: string
-  refUnsplash: string
-  refPexels: string
+  imagen: string
+  autor: string
 }
 
 type Pieza3D = {
@@ -125,29 +126,43 @@ const CABLEADO: ItemCableado[] = [
     icono: '🔌',
     nombre: 'Cables Jumper',
     detalle: 'Macho-Macho, Macho-Hembra y Hembra-Hembra para conectar sensores a la protoboard.',
-    refUnsplash: 'https://unsplash.com/s/photos/jumper-wires',
-    refPexels: 'https://www.pexels.com/search/jumper%20cables/',
+    imagen: 'https://images.unsplash.com/photo-1553406830-ef2513450d76?auto=format&fit=crop&w=600&q=80',
+    autor: 'Unsplash',
   },
   {
     icono: '🧩',
     nombre: 'Protoboard / Placa de pruebas',
     detalle: 'Base sin soldadura para montar y validar el circuito antes de fijarlo.',
-    refUnsplash: 'https://unsplash.com/s/photos/breadboard-electronics',
-    refPexels: 'https://www.pexels.com/search/breadboard/',
+    imagen: 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=600&q=80',
+    autor: 'Unsplash',
   },
   {
     icono: '💧',
     nombre: 'Manguera de silicona 1/4"',
     detalle: 'Conduce agua y CO₂ entre el reactor, la bomba y la piedra difusora.',
-    refUnsplash: 'https://unsplash.com/s/photos/aquarium-tubing',
-    refPexels: 'https://www.pexels.com/search/aquarium%20tube/',
+    imagen: 'https://images.unsplash.com/photo-1559827260-dc66d52bef19?auto=format&fit=crop&w=600&q=80',
+    autor: 'Unsplash',
   },
   {
     icono: '🫧',
     nombre: 'Piedra aireadora de pecera',
     detalle: 'Difunde aire en burbujas finas para oxigenar y agitar el cultivo.',
-    refUnsplash: 'https://unsplash.com/s/photos/aquarium-air-stone',
-    refPexels: 'https://www.pexels.com/search/aquarium%20air%20stone/',
+    imagen: 'https://images.unsplash.com/photo-1522069169874-c58ec4b76be5?auto=format&fit=crop&w=600&q=80',
+    autor: 'Unsplash',
+  },
+  {
+    icono: '🌫️',
+    nombre: 'Sensor MQ-135',
+    detalle: 'Sensor de calidad del aire que mide CO₂ y compuestos volátiles.',
+    imagen: 'https://images.unsplash.com/photo-1601042879364-f3947d3f9c16?auto=format&fit=crop&w=600&q=80',
+    autor: 'Unsplash',
+  },
+  {
+    icono: '⛲',
+    nombre: 'Bomba de agua 5V',
+    detalle: 'Bomba sumergible que recircula el medio de cultivo y oxigena la biomasa.',
+    imagen: 'https://images.unsplash.com/photo-1517077304055-6e89abbf09b0?auto=format&fit=crop&w=600&q=80',
+    autor: 'Unsplash',
   },
 ]
 
@@ -534,19 +549,34 @@ uv run main.py`}
         </p>
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
           {CABLEADO.map((item) => (
-            <div key={item.nombre} className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-              <div className="flex items-center gap-3">
-                <span className="text-2xl">{item.icono}</span>
-                <span className="font-medium text-slate-900">{item.nombre}</span>
-              </div>
-              <p className="mt-2 text-sm text-slate-600">{item.detalle}</p>
-              <div className="mt-3 flex gap-4 text-xs">
-                <a href={item.refUnsplash} target="_blank" rel="noopener noreferrer" className="font-medium text-emerald-600 hover:text-emerald-500">
-                  📷 Unsplash ↗
-                </a>
-                <a href={item.refPexels} target="_blank" rel="noopener noreferrer" className="font-medium text-emerald-600 hover:text-emerald-500">
-                  📷 Pexels ↗
-                </a>
+            <div
+              key={item.nombre}
+              className="group overflow-hidden rounded-xl border border-slate-200 bg-white transition-all hover:shadow-md"
+            >
+              <Image
+                src={item.imagen}
+                alt={item.nombre}
+                width={600}
+                height={400}
+                className="h-40 w-full rounded-t-xl object-cover transition-transform duration-500 group-hover:scale-105"
+              />
+              <div className="p-4">
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">{item.icono}</span>
+                  <span className="font-medium text-slate-900">{item.nombre}</span>
+                </div>
+                <p className="mt-2 text-sm text-slate-600">{item.detalle}</p>
+                <p className="mt-3 text-xs text-slate-400">
+                  📷 Foto por {item.autor} en{' '}
+                  <a
+                    href={item.imagen}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-medium text-emerald-600 hover:text-emerald-500"
+                  >
+                    Unsplash ↗
+                  </a>
+                </p>
               </div>
             </div>
           ))}
