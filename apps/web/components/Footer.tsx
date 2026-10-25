@@ -1,5 +1,6 @@
 import Image from 'next/image'
 import Link from 'next/link'
+import CookiePreferencesButton from './CookiePreferencesButton'
 
 export default function Footer() {
   return (
@@ -18,7 +19,12 @@ export default function Footer() {
         <p className="text-xs text-slate-500">
           © 2026 YU&apos;AM · MILAB · Plan K&apos;atun 2032 · ODS 3, 4, 11, 12, 13
         </p>
-        <p className="text-xs text-slate-500">bionexo_support@proton.me</p>
+        <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs text-slate-500">
+          <Link href="/privacidad" className="underline hover:text-emerald-700">Privacidad</Link>
+          <Link href="/terminos" className="underline hover:text-emerald-700">Términos</Link>
+          <CookiePreferencesButton />
+          <a href="mailto:bionexo_support@proton.me" className="hover:text-emerald-700">bionexo_support@proton.me</a>
+        </div>
       </div>
     </footer>
   )

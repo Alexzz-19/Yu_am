@@ -15,7 +15,9 @@
    `https://TU_PROYECTO.supabase.co/auth/v1/callback`. En Supabase URL Configuration,
    configura Site URL y autoriza `https://TU_DOMINIO/login` y, en desarrollo,
    `http://localhost:3000/login`. El cliente usa PKCE y Supabase procesa el código
-   al regresar a `/login`; una sesión válida redirige a `/perfil`.
+   al regresar a `/login`; una sesión válida redirige a `/perfil`. `@supabase/ssr`
+   comparte la sesión mediante cookies y `middleware.ts` valida los JWT en `/perfil`
+   y `/dashboard` antes de mostrar esas páginas.
 4. Crea un widget **Cloudflare Turnstile** para tus dominios y localhost. Su site
    key se guarda en `NEXT_PUBLIC_RECAPTCHA_SITE_KEY` (se conserva el nombre pedido).
    No uses una clave de Google reCAPTCHA: Supabase Auth admite Turnstile/hCaptcha.
@@ -26,7 +28,9 @@
    de Supabase Auth y confirma la política de confirmación de correo.
 5. Reinicia o reconstruye Next.js tras configurar variables públicas.
 
-Sin site key el formulario por correo queda deshabilitado. Sin service role la
+En producción, sin site key el formulario por correo queda deshabilitado. Durante
+desarrollo local, Turnstile se omite para permitir probar el flujo sin configurar
+Cloudflare; Supabase Auth sigue aplicando sus propias reglas. Sin service role la
 ingesta devuelve 503; no hay credenciales por defecto ni modo de prueba en producción.
 Google requiere configuración independiente en Supabase. El código, por sí solo,
 no habilita proveedores ni secretos en servicios externos.
