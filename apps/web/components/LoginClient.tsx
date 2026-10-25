@@ -9,6 +9,7 @@ import Turnstile from './Turnstile'
 export default function LoginClient() {
   const router = useRouter()
   const { user, loading } = useAuth()
+  const captchaRequired = process.env.NODE_ENV !== 'development'
   const [captchaToken, setCaptchaToken] = useState('')
   const [attempt, setAttempt] = useState(0)
   const [busy, setBusy] = useState(false)
@@ -28,30 +29,34 @@ export default function LoginClient() {
   async function google() {
     setBusy(true); setMessage('')
     try {
-      const { error } = await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: `${window.location.origin}/login` } })
+      const authOrigin = process.env.NODE_ENV === 'development' ? window.location.origin : 'https://yuam.tech'
+      const { error } = await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: `${authOrigin}/login` } })
       if (error) throw error
     } catch { setMessage('No se pudo iniciar el acceso con Google. Inténtalo de nuevo.'); setBusy(false) }
   }
 
   async function email(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (!captchaToken || busy) return
+    if ((captchaRequired && !captchaToken) || busy) return
     setBusy(true); setMessage('')
     const fields = new FormData(event.currentTarget)
     const credentials = { email: String(fields.get('email')).trim(), password: String(fields.get('password')) }
+    const captchaOptions = captchaRequired ? { captchaToken } : {}
     try {
       if (mode === 'signup') {
-        const { data, error } = await supabase.auth.signUp({ ...credentials, options: { captchaToken, emailRedirectTo: `${window.location.origin}/login` } })
+        const authOrigin = process.env.NODE_ENV === 'development' ? window.location.origin : 'https://yuam.tech'
+        const { data, error } = await supabase.auth.signUp({ ...credentials, options: { ...captchaOptions, emailRedirectTo: `${authOrigin}/login` } })
         if (error) throw error
         if (data.session) router.replace('/perfil')
         else setMessage('Si el correo admite el registro, recibirás un enlace para confirmar tu cuenta.')
       } else {
-        const { error } = await supabase.auth.signInWithPassword({ ...credentials, options: { captchaToken } })
+        const { error } = await supabase.auth.signInWithPassword({ ...credentials, options: captchaOptions })
         if (error) throw error
         router.replace('/perfil')
       }
     } catch {
-      setMessage(mode === 'login' ? 'No se pudo acceder. Comprueba tu correo, contraseña y verificación anti-bot.' : 'No se pudo crear la cuenta. Revisa los datos y la verificación anti-bot.')
+      const message = mode === 'login' ? 'No se pudo acceder. Comprueba tu correo y contraseña.' : 'No se pudo crear la cuenta. Revisa los datos.'
+      setMessage(captchaRequired ? `${message} También verifica el control anti-bot.` : message)
     } finally { setBusy(false); setCaptchaToken(''); setAttempt(value => value + 1) }
   }
 
@@ -65,8 +70,8 @@ export default function LoginClient() {
       <label className="block text-sm font-medium" htmlFor="email">Correo electrónico<input id="email" name="email" type="email" autoComplete="email" required maxLength={254} className={input} /></label>
       <label className="block text-sm font-medium" htmlFor="password">Contraseña<input id="password" name="password" type="password" autoComplete={mode === 'login' ? 'current-password' : 'new-password'} required minLength={mode === 'signup' ? 8 : 1} maxLength={128} className={input} /></label>
       {mode === 'signup' && <p className="text-sm text-slate-600">Usa al menos 8 caracteres. Te enviaremos un correo de confirmación.</p>}
-      <Turnstile key={attempt} onToken={setCaptchaToken} />
-      <button disabled={busy || !captchaToken} className={`${button} bg-emerald-600 text-white hover:bg-emerald-700`}>{busy ? 'Procesando…' : mode === 'login' ? 'Iniciar sesión' : 'Crear cuenta'}</button>
+      {captchaRequired && <Turnstile key={attempt} onToken={setCaptchaToken} />}
+      <button disabled={busy || (captchaRequired && !captchaToken)} className={`${button} bg-emerald-600 text-white hover:bg-emerald-700`}>{busy ? 'Procesando…' : mode === 'login' ? 'Iniciar sesión' : 'Crear cuenta'}</button>
     </form>
     <button type="button" disabled={busy} onClick={() => { setMode(mode === 'login' ? 'signup' : 'login'); setMessage(''); setCaptchaToken(''); setAttempt(value => value + 1) }} className="mt-5 text-sm font-medium text-emerald-700 underline">{mode === 'login' ? 'Crear una cuenta con correo' : 'Ya tengo una cuenta'}</button>
     <p role="status" className="mt-4 text-sm text-slate-700">{message}</p>
