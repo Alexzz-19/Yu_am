@@ -57,6 +57,13 @@ const iconoConsulta = L.divIcon({
   iconAnchor: [8, 8],
 })
 
+const iconoComunitario = L.divIcon({
+  className: '',
+  html: '<div style="width:18px;height:18px;border-radius:50%;background:#059669;border:3px solid #fff;box-shadow:0 0 0 4px rgba(5,150,105,0.24),0 2px 6px rgba(0,0,0,0.3)"></div>',
+  iconSize: [18, 18],
+  iconAnchor: [9, 9],
+})
+
 const iconoUsuario = L.divIcon({
   className: '',
   html: '<div style="width:20px;height:20px;border-radius:50%;background:#2563eb;border:3px solid #fff;box-shadow:0 0 0 5px rgba(37,99,235,0.25),0 2px 8px rgba(0,0,0,0.35)"></div>',
@@ -297,7 +304,7 @@ export default function GlobalMap() {
           <FlyTo objetivo={objetivo} />
 
           {nodes.filter(node => Number.isFinite(node.ubicacion_ofuscada.lat) && Number.isFinite(node.ubicacion_ofuscada.lng)).map(node => (
-            <Marker key={node.id} position={[node.ubicacion_ofuscada.lat!, node.ubicacion_ofuscada.lng!]} icon={node.estado === 'activo' ? iconoCentral : iconoConsulta}>
+            <Marker key={node.id} position={[node.ubicacion_ofuscada.lat!, node.ubicacion_ofuscada.lng!]} icon={iconoComunitario}>
               <Popup><div className="min-w-[200px]"><p className="font-semibold">{node.nombre_nodo}</p><p>{node.ubicacion_ofuscada.zona}</p><p className="mt-2">{node.estado === 'activo' ? '🟢 Activo' : 'Sin lecturas recientes'}</p><p className="mt-1 text-xs">{node.ultimo_envio ? `Última lectura: ${new Date(node.ultimo_envio).toLocaleString()}` : 'Esperando la primera lectura'}</p><p className="mt-1 text-xs">Ubicación aproximada. Se actualiza cada 30 segundos.</p></div></Popup>
             </Marker>
           ))}

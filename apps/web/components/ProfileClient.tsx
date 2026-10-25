@@ -1,12 +1,18 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState, type FormEvent, type MouseEvent } from 'react'
+import dynamic from 'next/dynamic'
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/use-auth'
 import { nodeRequest } from '@/lib/node-api'
 import { supabase } from '@/lib/supabaseClient'
 import type { Database } from '@/lib/database.types'
 import { LOCATION_CATALOG, countryByName, locationForCoordinates, placeByName, type Coordinates } from '@/lib/locations'
+
+const LeafletMap = dynamic(() => import('@/components/LeafletMap'), {
+  ssr: false,
+  loading: () => <div className="mt-3 h-72 animate-pulse rounded-2xl bg-emerald-50" aria-label="Cargando mapa" />,
+})
 
 type Node = Database['public']['Tables']['nodos_iot']['Row']
 
@@ -24,6 +30,11 @@ type ProfileForm = {
   country: string
   city: string
   timezone: string
+}
+
+type NodeLocation = Coordinates & {
+  country: string
+  city: string
 }
 
 type StoredProfile = {
@@ -68,6 +79,11 @@ function sameProfile(left: ProfileForm, right: ProfileForm) {
   return left.username === right.username && left.country === right.country && left.city === right.city && left.timezone === right.timezone
 }
 
+function nodeLocationFrom(country: string, city: string): NodeLocation {
+  const place = placeByName(country, city)
+  return { country: countryByName(country).name, city: place.name, lat: place.lat, lng: place.lng }
+}
+
 export default function ProfileClient() {
   const { user, loading } = useAuth()
   const router = useRouter()
@@ -77,8 +93,7 @@ export default function ProfileClient() {
   const [profile, setProfile] = useState<ProfileForm>(defaultProfile)
   const [savedProfile, setSavedProfile] = useState<ProfileForm>(defaultProfile)
   const [editsUsed, setEditsUsed] = useState(0)
-  const [coordinates, setCoordinates] = useState<Coordinates | null>(null)
-  const [mapCenter, setMapCenter] = useState<Coordinates>(LOCATION_CATALOG[0].places[0])
+  const [nodeLocation, setNodeLocation] = useState<NodeLocation>(() => nodeLocationFrom(LOCATION_CATALOG[0].name, LOCATION_CATALOG[0].places[0].name))
   const [message, setMessage] = useState('')
   const [locationMessage, setLocationMessage] = useState('Selecciona una ciudad, usa tu ubicación o marca un punto aproximado en el mapa.')
   const [busy, setBusy] = useState(false)
@@ -88,6 +103,7 @@ export default function ProfileClient() {
   const [deleteConfirmed, setDeleteConfirmed] = useState(false)
 
   const selectedCountry = useMemo(() => countryByName(profile.country), [profile.country])
+  const selectedNodeCountry = useMemo(() => countryByName(nodeLocation.country), [nodeLocation.country])
   const profileDirty = !sameProfile(profile, savedProfile)
 
   const loadNodes = useCallback(async () => {
@@ -113,8 +129,7 @@ export default function ProfileClient() {
         setProfile(nextProfile)
         setSavedProfile(nextProfile)
         setEditsUsed(editsThisMonth(user.app_metadata))
-        setCoordinates({ lat: fallbackPlace.lat, lng: fallbackPlace.lng })
-        setMapCenter({ lat: fallbackPlace.lat, lng: fallbackPlace.lng })
+        setNodeLocation(nodeLocationFrom(nextProfile.country, fallbackPlace.name))
       }
       try {
         await loadNodes()
@@ -146,21 +161,33 @@ export default function ProfileClient() {
     }
   }
 
-  function changeCountry(countryName: string) {
+  function changeProfileCountry(countryName: string) {
     const country = countryByName(countryName)
     const place = country.places[0]
     setProfile(current => ({ ...current, country: country.name, city: place.name }))
-    setCoordinates({ lat: place.lat, lng: place.lng })
-    setMapCenter({ lat: place.lat, lng: place.lng })
-    setLocationMessage(`Ubicación aproximada de ${place.name}, ${country.name}.`)
   }
 
-  function changePlace(placeName: string) {
+  function changeProfilePlace(placeName: string) {
     const place = placeByName(profile.country, placeName)
     setProfile(current => ({ ...current, city: place.name }))
-    setCoordinates({ lat: place.lat, lng: place.lng })
-    setMapCenter({ lat: place.lat, lng: place.lng })
-    setLocationMessage(`Ubicación aproximada de ${place.name}, ${profile.country}.`)
+  }
+
+  function changeNodeCountry(countryName: string) {
+    const country = countryByName(countryName)
+    setNodeLocation(nodeLocationFrom(country.name, country.places[0].name))
+    setLocationMessage(`Mapa centrado en ${country.places[0].name}, ${country.name}.`)
+  }
+
+  function changeNodePlace(placeName: string) {
+    setNodeLocation(nodeLocationFrom(nodeLocation.country, placeName))
+    setLocationMessage(`Mapa centrado en ${placeName}, ${nodeLocation.country}.`)
+  }
+
+  function updateNodeCoordinates(point: Coordinates) {
+    const location = locationForCoordinates(point)
+    if (location) setNodeLocation({ country: location.country.name, city: location.place.name, ...point })
+    else setNodeLocation(current => ({ ...current, ...point }))
+    setLocationMessage(location ? `Ubicación actualizada en ${location.place.name}, ${location.country.name}.` : 'Ubicación actualizada en el mapa.')
   }
 
   function useCurrentLocation() {
@@ -172,45 +199,23 @@ export default function ProfileClient() {
     navigator.geolocation.getCurrentPosition(
       position => {
         const point = { lat: position.coords.latitude, lng: position.coords.longitude }
-        const location = locationForCoordinates(point)
-        setCoordinates(point)
-        setMapCenter(point)
-        if (location) {
-          setProfile(current => ({ ...current, country: location.country.name, city: location.place.name }))
-          setLocationMessage(`Ubicación GPS aplicada y mapa centrado en ${location.place.name}, ${location.country.name}.`)
-        } else setLocationMessage('Ubicación GPS aplicada y mapa centrado en tu posición aproximada.')
+        updateNodeCoordinates(point)
       },
       () => setLocationMessage('No pudimos acceder a tu ubicación. Marca un punto aproximado en el mapa.'),
       { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 },
     )
   }
 
-  function chooseMapPoint(event: MouseEvent<HTMLButtonElement>) {
-    const bounds = event.currentTarget.getBoundingClientRect()
-    const x = (event.clientX - bounds.left) / bounds.width
-    const y = (event.clientY - bounds.top) / bounds.height
-    const point = { lat: mapCenter.lat + (0.5 - y) * 6, lng: mapCenter.lng + (x - 0.5) * 8 }
-    const location = locationForCoordinates(point)
-    setCoordinates(point)
-    setMapCenter(point)
-    if (location) setProfile(current => ({ ...current, country: location.country.name, city: location.place.name }))
-    setLocationMessage('Punto aproximado marcado en el mapa. Puedes volver a pulsar para ajustarlo.')
-  }
-
   async function registerNode(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (!coordinates) {
-      setMessage('Elige una ubicación aproximada antes de registrar el nodo.')
-      return
-    }
     setBusy(true)
     setMessage('')
     try {
       const result = await nodeRequest<NodeRegistration>('/api/nodes', 'POST', {
-        nombre: name.trim() || `Nodo ${profile.city}`,
-        zona: `${profile.city}, ${profile.country}`,
-        lat: coordinates.lat,
-        lng: coordinates.lng,
+        nombre: name.trim() || `Nodo ${nodeLocation.city}`,
+        zona: `${nodeLocation.city}, ${nodeLocation.country}`,
+        lat: nodeLocation.lat,
+        lng: nodeLocation.lng,
       })
       setSecret(result)
       setNodes(current => [result.node, ...current.filter(node => node.id !== result.node.id)])
@@ -280,12 +285,12 @@ export default function ProfileClient() {
               <span className="mt-1 block text-xs font-normal text-slate-500">Detectada automáticamente: {browserTimezone()}</span>
             </label>
             <label className="text-sm font-bold text-slate-700">País
-              <select value={profile.country} onChange={event => changeCountry(event.target.value)} className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100">
+              <select value={profile.country} onChange={event => changeProfileCountry(event.target.value)} className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100">
                 {LOCATION_CATALOG.map(country => <option key={country.name} value={country.name} disabled={country.disabled}>{country.name}</option>)}
               </select>
             </label>
             <label className="text-sm font-bold text-slate-700">{profile.country === 'Guatemala' ? 'Departamento' : 'Ciudad o zona'}
-              <select value={profile.city} onChange={event => changePlace(event.target.value)} className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100">
+              <select value={profile.city} onChange={event => changeProfilePlace(event.target.value)} className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100">
                 {selectedCountry.places.map(place => <option key={place.name}>{place.name}</option>)}
               </select>
             </label>
@@ -307,17 +312,17 @@ export default function ProfileClient() {
         </div>
         <form onSubmit={registerNode} className="mt-6 grid gap-4 lg:grid-cols-2">
           <label className="text-sm font-bold text-slate-700">Nombre del nodo
-            <input value={name} onChange={event => setName(event.target.value)} maxLength={80} placeholder={`Ej. Laboratorio ${profile.city}`} className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100" />
+            <input value={name} onChange={event => setName(event.target.value)} maxLength={80} placeholder={`Ej. Laboratorio ${nodeLocation.city}`} className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100" />
           </label>
           <div className="grid grid-cols-2 gap-3">
             <label className="text-sm font-bold text-slate-700">País
-              <select value={profile.country} onChange={event => changeCountry(event.target.value)} className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100">
+              <select value={nodeLocation.country} onChange={event => changeNodeCountry(event.target.value)} className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100">
                 {LOCATION_CATALOG.map(country => <option key={country.name} value={country.name} disabled={country.disabled}>{country.name}</option>)}
               </select>
             </label>
-            <label className="text-sm font-bold text-slate-700">{profile.country === 'Guatemala' ? 'Departamento' : 'Ciudad / zona'}
-              <select value={profile.city} onChange={event => changePlace(event.target.value)} className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100">
-                {selectedCountry.places.map(place => <option key={place.name}>{place.name}</option>)}
+            <label className="text-sm font-bold text-slate-700">{nodeLocation.country === 'Guatemala' ? 'Departamento' : 'Ciudad / zona'}
+              <select value={nodeLocation.city} onChange={event => changeNodePlace(event.target.value)} className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100">
+                {selectedNodeCountry.places.map(place => <option key={place.name}>{place.name}</option>)}
               </select>
             </label>
           </div>
@@ -326,12 +331,8 @@ export default function ProfileClient() {
               <p className="text-sm text-slate-600">{locationMessage}</p>
               <button type="button" onClick={useCurrentLocation} className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-bold text-emerald-900 transition hover:bg-emerald-100">📍 Usar mi ubicación aproximada</button>
             </div>
-            <button type="button" onClick={chooseMapPoint} aria-label="Marcar ubicación aproximada en el mapa" className="relative mt-3 h-32 w-full overflow-hidden rounded-2xl border border-emerald-200 bg-[#e7f6ed] text-left shadow-inner">
-              <span aria-hidden="true" className="absolute -inset-8 transition-transform duration-700 ease-out" style={{ transform: `translate(${-(mapCenter.lng % 12) * 3}px, ${mapCenter.lat % 12 * 3}px)`, backgroundSize: '28px 28px', backgroundImage: 'linear-gradient(rgba(16,185,129,.16) 1px, transparent 1px), linear-gradient(90deg, rgba(16,185,129,.16) 1px, transparent 1px)' }} />
-              <span className="absolute left-5 top-4 rounded-full bg-white/85 px-3 py-1 text-xs font-bold text-emerald-950">Mapa centrado · pulsa para ubicar</span>
-              <span className="absolute left-1/2 top-1/2 size-5 -translate-x-1/2 -translate-y-1/2 rounded-full border-4 border-white bg-emerald-600 shadow-lg" aria-hidden="true" />
-            </button>
-            {coordinates && <p className="mt-2 text-xs text-slate-500">Mapa centrado en {mapCenter.lat.toFixed(4)}, {mapCenter.lng.toFixed(4)} · ubicación elegida: {coordinates.lat.toFixed(4)}, {coordinates.lng.toFixed(4)}.</p>}
+            <LeafletMap coordinates={nodeLocation} onCoordinatesChange={updateNodeCoordinates} />
+            <p className="mt-2 text-xs text-slate-500">Ubicación elegida: {nodeLocation.lat.toFixed(4)}, {nodeLocation.lng.toFixed(4)}.</p>
           </div>
           <div className="lg:col-span-2">
             <button type="submit" disabled={busy} className="rounded-xl bg-slate-950 px-5 py-3 text-sm font-bold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50">{busy ? 'Registrando…' : 'Registrar nodo'}</button>
