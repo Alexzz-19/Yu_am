@@ -1,6 +1,7 @@
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import HardwareClient from '@/components/HardwareClient'
+import HardwareFieldGuide from '@/components/HardwareFieldGuide'
 
 export default function HardwarePage() {
   return (
@@ -27,6 +28,7 @@ export default function HardwarePage() {
           </p>
         </aside>
         <HardwareClient />
+        <HardwareFieldGuide />
         <section className="mt-10 rounded-2xl border border-emerald-200 bg-emerald-50 p-6">
           <h2 className="text-lg font-semibold text-emerald-900">
             🌱 Aprovechamiento de Biomasa Cosechada y Residuos
