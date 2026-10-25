@@ -17,7 +17,6 @@ type Alga = {
   cuidados: {
     temperatura: string
     ph: string
-    limpieza: string
     cosecha: string
   }
 }
@@ -36,7 +35,6 @@ type Divisa = {
   simbolo: string
   nombre: string
   gtqPorUnidad: number
-  decimales: number
 }
 
 type ItemCableado = {
@@ -62,7 +60,6 @@ const ALGAS: Alga[] = [
     cuidados: {
       temperatura: '20 – 30 °C',
       ph: '6.5 – 7.5',
-      limpieza: 'Limpieza de mangueras cada 30 días.',
       cosecha: 'Cosecha parcial cada 7 – 10 días.',
     },
   },
@@ -76,7 +73,6 @@ const ALGAS: Alga[] = [
     cuidados: {
       temperatura: '30 – 37 °C',
       ph: '8.5 – 10.5',
-      limpieza: 'Limpieza de mangueras cada 15 días.',
       cosecha: 'Cosecha parcial cada 5 – 7 días.',
     },
   },
@@ -89,7 +85,6 @@ const ALGAS: Alga[] = [
     cuidados: {
       temperatura: '20 – 28 °C',
       ph: '6.0 – 8.0',
-      limpieza: 'Limpieza de mangueras cada 30 días.',
       cosecha: 'Cosecha parcial cada 10 – 15 días.',
     },
   },
@@ -114,11 +109,11 @@ const COMPONENTES: Componente[] = [
 ]
 
 const DIVISAS: Divisa[] = [
-  { id: 'GTQ', simbolo: 'Q', nombre: 'Quetzal (GTQ)', gtqPorUnidad: 1, decimales: 0 },
-  { id: 'USD', simbolo: '$', nombre: 'Dólar (USD)', gtqPorUnidad: 7.8, decimales: 2 },
-  { id: 'EUR', simbolo: '€', nombre: 'Euro (EUR)', gtqPorUnidad: 8.5, decimales: 2 },
-  { id: 'MXN', simbolo: '$', nombre: 'Peso (MXN)', gtqPorUnidad: 0.44, decimales: 2 },
-  { id: 'COP', simbolo: '$', nombre: 'Peso (COP)', gtqPorUnidad: 0.0018, decimales: 0 },
+  { id: 'GTQ', simbolo: 'Q', nombre: 'Quetzal (GTQ)', gtqPorUnidad: 1 },
+  { id: 'USD', simbolo: '$', nombre: 'Dólar (USD)', gtqPorUnidad: 7.8 },
+  { id: 'EUR', simbolo: '€', nombre: 'Euro (EUR)', gtqPorUnidad: 8.5 },
+  { id: 'MXN', simbolo: '$', nombre: 'Peso (MXN)', gtqPorUnidad: 0.44 },
+  { id: 'COP', simbolo: '$', nombre: 'Peso (COP)', gtqPorUnidad: 0.0018 },
 ]
 
 const CABLEADO: ItemCableado[] = [
@@ -293,8 +288,8 @@ export default function HardwareClient() {
   )
 
   const formatearDivisa = (gtq: number): string => {
-    const valor = gtq / divisaActual.gtqPorUnidad
-    return `${divisaActual.simbolo} ${valor.toFixed(divisaActual.decimales)}`
+    const valor = Math.round(gtq / divisaActual.gtqPorUnidad)
+    return `${divisaActual.simbolo} ${valor.toLocaleString('es-GT', { maximumFractionDigits: 0 })}`
   }
 
   const codigoActual = firmware === 'arduino' ? CODIGO_ARDUINO : CODIGO_ESP32
@@ -400,9 +395,60 @@ export default function HardwareClient() {
           </a>
           ), entre 10 y 100 veces más rápido que <code className="font-mono text-slate-800">pip</code>.
         </p>
-        <pre className="mt-4 overflow-x-auto rounded-xl border border-slate-200 bg-slate-50 p-4 font-mono text-xs leading-relaxed text-slate-800">
-{`curl -LsSf https://astral.sh/uv/install.sh | sh
-uv venv
+        <p className="mt-4 text-sm text-slate-600">
+          Abre la configuración de tu sistema para preparar Arduino IDE, el puerto serial y uv.
+        </p>
+        <div className="mt-3 divide-y divide-slate-200 rounded-xl border border-slate-200">
+          <details className="p-4">
+            <summary className="cursor-pointer text-sm font-semibold text-slate-900">Windows</summary>
+            <p className="mt-3 text-sm leading-relaxed text-slate-600">
+              Instala los controladores CH340 o CP2102 según el chip de tu placa. Consulta el
+              Administrador de dispositivos y selecciona el puerto asignado, por ejemplo COM3 o
+              COM4, en Herramientas → Puerto de Arduino IDE y en tu script de telemetría.
+              Instala uv desde PowerShell:
+            </p>
+            <pre className="mt-3 overflow-x-auto rounded-lg bg-slate-50 p-3 text-xs text-slate-800"><code>{'powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"'}</code></pre>
+          </details>
+          <details className="p-4">
+            <summary className="cursor-pointer text-sm font-semibold text-slate-900">macOS</summary>
+            <p className="mt-3 text-sm leading-relaxed text-slate-600">
+              Selecciona el dispositivo /dev/cu.usbserial* en Arduino IDE y en tu script de
+              telemetría. Si el sistema solicita permisos para el accesorio USB o el controlador,
+              autorízalos en Ajustes del Sistema → Privacidad y seguridad. Instala uv en Terminal:
+            </p>
+            <pre className="mt-3 overflow-x-auto rounded-lg bg-slate-50 p-3 text-xs text-slate-800"><code>curl -LsSf https://astral.sh/uv/install.sh | sh</code></pre>
+          </details>
+          <details className="p-4">
+            <summary className="cursor-pointer text-sm font-semibold text-slate-900">Linux (Debian / Ubuntu / Mint)</summary>
+            <p className="mt-3 text-sm leading-relaxed text-slate-600">
+              Concede a tu usuario acceso al puerto serial con el grupo dialout:
+            </p>
+            <pre className="mt-3 overflow-x-auto rounded-lg bg-slate-50 p-3 text-xs text-slate-800"><code>sudo usermod -a -G dialout $USER</code></pre>
+            <p className="mt-3 text-sm leading-relaxed text-slate-600">
+              Cierra sesión y vuelve a entrar. Selecciona /dev/ttyUSB0 o /dev/ttyACM0 en Arduino IDE
+              y en tu script de telemetría. Instala uv:
+            </p>
+            <pre className="mt-3 overflow-x-auto rounded-lg bg-slate-50 p-3 text-xs text-slate-800"><code>curl -LsSf https://astral.sh/uv/install.sh | sh</code></pre>
+          </details>
+          <details className="p-4">
+            <summary className="cursor-pointer text-sm font-semibold text-slate-900">Linux (Arch / Fedora)</summary>
+            <p className="mt-3 text-sm leading-relaxed text-slate-600">
+              Si tu puerto pertenece al grupo uucp, concede acceso a tu usuario:
+            </p>
+            <pre className="mt-3 overflow-x-auto rounded-lg bg-slate-50 p-3 text-xs text-slate-800"><code>sudo usermod -a -G uucp $USER</code></pre>
+            <p className="mt-3 text-sm leading-relaxed text-slate-600">
+              Comprueba el grupo propietario con <code>ls -l /dev/ttyUSB0</code>; si es dialout,
+              usa ese grupo en el comando. Cierra sesión y vuelve a entrar. Selecciona el puerto
+              /dev/ttyUSB0 o /dev/ttyACM0 en Arduino IDE y en tu script de telemetría. Instala uv:
+            </p>
+            <pre className="mt-3 overflow-x-auto rounded-lg bg-slate-50 p-3 text-xs text-slate-800"><code>curl -LsSf https://astral.sh/uv/install.sh | sh</code></pre>
+          </details>
+        </div>
+        <p className="mt-4 text-sm text-slate-600">
+          Después de instalar uv, abre una terminal nueva en la carpeta de tu script y prepara el entorno:
+        </p>
+        <pre className="mt-3 overflow-x-auto rounded-xl border border-slate-200 bg-slate-50 p-4 font-mono text-xs leading-relaxed text-slate-800">
+{`uv venv
 uv pip install requests pyserial
 uv run main.py`}
         </pre>
@@ -599,7 +645,11 @@ uv run main.py`}
           </div>
           <div className="rounded-xl border border-slate-200 p-4">
             <p className="text-xs uppercase tracking-wide text-slate-400">Limpieza de mangueras</p>
-            <p className="mt-1 font-semibold text-slate-900">{algaActual.cuidados.limpieza}</p>
+            <p className="mt-1 text-sm leading-relaxed text-slate-900">
+              Limpieza recomendada cada 15 a 45 días (Mínimo: al notar acumulación de biofilm;
+              Máximo: 45 días para evitar taponamientos de aire). Obligatoria únicamente si
+              disminuye la aireación.
+            </p>
           </div>
           <div className="rounded-xl border border-slate-200 p-4">
             <p className="text-xs uppercase tracking-wide text-slate-400">Frecuencia de cosecha</p>
