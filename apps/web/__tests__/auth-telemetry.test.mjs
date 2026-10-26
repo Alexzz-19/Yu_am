@@ -68,7 +68,7 @@ describe('ingesta autenticada', () => {
     const response = await route.POST(request({ co2_ppm: 520 }))
     assert.equal(response.status, 429)
     assert.equal(response.headers.get('Retry-After'), '59')
-    assert.equal((await response.json()).error, 'Frecuencia de envío superada. Máximo 1 lectura por minuto')
+    assert.equal((await response.json()).error, 'Frecuencia de envío superada. Máximo 1 lectura cada 30 minutos por nodo.')
   })
 
   it('rechaza tokens revocados y falla sin filtrar detalles de la base', async () => {
@@ -82,7 +82,7 @@ describe('ingesta autenticada', () => {
 
   it('rechaza cuerpo vacío, tipos incorrectos, límites, JSON inválido y cuerpos grandes', async () => {
     const route = modules({ rpc: () => assert.fail('No debe consultar DB') })('app/api/telemetry/route.ts')
-    for (const body of [{}, [], null, { ph: 15 }, { ph: '7' }, { temperatura: -56 }, { co2_ppm: -1 }, { co2_ppm: true }, { lux: -1 }, { pm25: -1 }]) {
+    for (const body of [{}, [], null, { ph: 15 }, { ph: '7' }, { temperatura: -56 }, { co2_ppm: -1 }, { co2_ppm: true }, { lux: -1 }, { pm25: -1 }, { humedad: 101 }, { humedad: -1 }, { humedad: '50' }]) {
       assert.equal((await route.POST(request(body))).status, 400)
     }
     const invalid = new Request('https://yuam.test/api/telemetry', { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: '{' })
@@ -90,6 +90,100 @@ describe('ingesta autenticada', () => {
     assert.equal((await route.POST(request({ ph: 'a'.repeat(5000) }))).status, 413)
     const wrongType = new Request('https://yuam.test/api/telemetry', { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: '{}' })
     assert.equal((await route.POST(wrongType)).status, 415)
+  })
+})
+
+describe('dashboard real y explorador comunitario', () => {
+  const id = '11111111-1111-4111-8111-111111111111'
+  const context = { params: Promise.resolve({ id }) }
+  const authorized = () => new Request(`https://yuam.test/api/nodes/${id}/readings?user_id=other&reactor_id=other`, { headers: { Authorization: 'Bearer verified-session' } })
+
+  it('impide consultar lecturas sin sesión y de nodos ajenos', async () => {
+    const noSession = modules({})('app/api/nodes/[id]/readings/route.ts')
+    assert.equal((await noSession.GET(new Request('https://yuam.test/api/nodes/x/readings'), context)).status, 401)
+    const filters = {}
+    const route = modules({
+      auth: { getUser: async () => ({ data: { user: { id: 'owner' } }, error: null }) },
+      from: table => {
+        assert.equal(table, 'nodes', 'No debe consultar reactores ni lecturas de un nodo ajeno')
+        const query = { select: () => query, eq: (field, value) => { filters[field] = value; return query }, maybeSingle: async () => ({ data: null, error: null }) }
+        return query
+      },
+    })('app/api/nodes/[id]/readings/route.ts')
+    assert.equal((await route.GET(authorized(), context)).status, 404)
+    assert.deepEqual(filters, { id, user_id: 'owner' })
+  })
+
+  it('vincula el nodo y reactor del propietario antes de obtener sus lecturas', async () => {
+    const filters = {}
+    const reading = { id: 1, reactor_id: 'owned-reactor', ppm_value: 0, humidity: 0, ph_value: 7.1, created_at: '2026-10-25T10:00:00Z' }
+    const route = modules({
+      auth: { getUser: async () => ({ data: { user: { id: 'owner' } }, error: null }) },
+      from: table => {
+        filters[table] = {}
+        const query = {
+          select: columns => { assert.ok(!/token|api_key/.test(columns)); return query },
+          eq: (field, value) => { filters[table][field] = value; return query },
+          maybeSingle: async () => ({ data: table === 'nodes' ? { id } : { id: 'owned-reactor', node_id: id }, error: null }),
+          order: (field, options) => { assert.equal(field, 'created_at'); assert.equal(options.ascending, false); return query },
+          limit: async count => { assert.equal(count, 96); return { data: [reading], error: null } },
+        }
+        return query
+      },
+    })('app/api/nodes/[id]/readings/route.ts')
+    const response = await route.GET(authorized(), context)
+    assert.equal(response.status, 200)
+    const result = await response.json()
+    assert.equal(result.readings[0].humidity, 0)
+    assert.equal(result.readings[0].ppm_value, 0)
+    assert.deepEqual(filters, { nodes: { id, user_id: 'owner' }, reactors: { node_id: id, user_id: 'owner' }, readings: { reactor_id: 'owned-reactor' } })
+  })
+
+  it('publica metadatos y estadísticas sin claves, propietario ni coordenadas precisas', async () => {
+    const route = modules({
+      rpc: async () => ({ data: [{ id, nombre_nodo: 'Cultivo', estado: 'inactivo', ubicacion_ofuscada: { lat: 14.6, lng: -90.5 }, ultimo_envio: null, token: 'SECRET', user_id: 'owner' }], error: null }),
+      from: table => {
+        assert.equal(table, 'nodes')
+        return { select: columns => {
+          assert.ok(!/token|user_id|api_key/.test(columns))
+          return { in: async (field, ids) => {
+            assert.equal(field, 'id'); assert.equal(ids[0], id)
+            return { data: [{ id, country: 'Guatemala', city: 'Petén', algae_type: 'Spirulina', category: 'Investigación', university: 'Universidad local', token: 'SECRET', lat: 14.5968 }], error: null }
+          } }
+        } }
+      },
+    })('app/api/nodes/route.ts')
+    const response = await route.GET(new Request('https://yuam.test/api/nodes?scope=community'))
+    assert.equal(response.status, 200)
+    const result = await response.json()
+    assert.equal(result.nodes[0].city, 'Petén')
+    assert.equal(result.nodes[0].university, 'Universidad local')
+    assert.ok(!JSON.stringify(result).includes('SECRET'))
+    assert.ok(!('user_id' in result.nodes[0]))
+    assert.ok(!('lat' in result.nodes[0]))
+  })
+
+  it('combina búsquedas sin acentos, cepa y categoría; conserva ceros y ausencias', () => {
+    const { filterDashboards, formatMetric } = modules({})('lib/dashboard.ts')
+    const nodes = [
+      { id: 'a', name: 'Cultivo Norte', city: 'Petén', country: 'Guatemala', algae_type: 'Spirulina platensis', university: 'Universidad Pública', category: 'Investigación' },
+      { id: 'b', name: 'Cultivo Sur', city: 'Guatemala', country: 'Guatemala', algae_type: 'Chlorella vulgaris', category: null },
+    ]
+    const filters = { text: 'peten publica', algae: 'spirulina', category: 'Investigación' }
+    assert.deepEqual([...filterDashboards(nodes, filters)].map(node => node.id), ['a'])
+    assert.equal(filterDashboards(nodes, { ...filters, algae: 'Chlorella' }).length, 0)
+    assert.equal(filterDashboards(nodes, { text: '', algae: '', category: 'Biomasa' }).length, 0)
+    assert.equal(filterDashboards(nodes, { text: '', algae: '', category: '' }).length, 2)
+    assert.equal(formatMetric(0), '0.0')
+    assert.equal(formatMetric(null), 'Sin datos')
+  })
+
+  it('acepta humedad real en porcentaje y la envía a la función de ingesta', async () => {
+    const route = modules({ rpc: async (_name, input) => {
+      assert.equal(input.p_humidity, 0)
+      return { data: { status: 'accepted', nodo_id: id }, error: null }
+    } })('app/api/telemetry/route.ts')
+    assert.equal((await route.POST(request({ humedad: 0 }))).status, 201)
   })
 })
 

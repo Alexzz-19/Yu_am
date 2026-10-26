@@ -74,11 +74,13 @@ export type RegisteredNode = {
   board_type: string
   algae_type: string
   sensors: string[]
+  category: string | null
+  university: string | null
 }
 
 export type HardwareReactor = { id: string; node_id: string | null; user_id: string | null; name: string; board_type: string; algae_type: string; sensors: string[]; location_name: string; latitude: number; longitude: number; api_key: string; created_at: string }
-export type HardwareReading = { id: number; reactor_id: string | null; ppm_value: number | null; water_temperature: number | null; ph_value: number | null; light_lux: number | null; pm25: number | null; air_pump_status: boolean | null; status_quality: string; created_at: string }
-export type TelemetryMetrics = { ppm: number | null; pm25: number | null; temperature: number | null; ph: number | null; lux: number | null }
+export type HardwareReading = { id: number; reactor_id: string | null; ppm_value: number | null; water_temperature: number | null; ph_value: number | null; light_lux: number | null; pm25: number | null; humidity: number | null; air_pump_status: boolean | null; status_quality: string; created_at: string }
+export type TelemetryMetrics = { ppm: number | null; pm25: number | null; temperature: number | null; ph: number | null; lux: number | null; humidity: number | null }
 export type NodeTelemetry = { last: TelemetryMetrics; week: TelemetryMetrics; month: TelemetryMetrics; weekSamples: number; monthSamples: number }
 
 export type NodeSummary = Omit<RegisteredNode, 'token'>
@@ -92,6 +94,12 @@ export type PublicNode = {
   estado: EstadoNodo
   ultimo_envio: string | null
   telemetry?: NodeTelemetry
+  country?: string
+  city?: string
+  algae_type?: string
+  board_type?: string
+  category?: string | null
+  university?: string | null
 }
 
 type Table<Row> = { Row: Row; Insert: Partial<Row>; Update: Partial<Row>; Relationships: [] }
@@ -111,7 +119,7 @@ export type Database = {
     Functions: {
       yuam_consume_chat_quota: { Args: { p_user_id: string }; Returns: Json }
       yuam_public_node_stats: { Args: Record<string, never>; Returns: PublicNode[] }
-      yuam_ingest_hardware: { Args: { p_token: string; p_ppm: number | null; p_ph: number | null; p_temperature: number | null; p_lux: number | null; p_pm25: number | null }; Returns: Json }
+      yuam_ingest_hardware: { Args: { p_token: string; p_ppm: number | null; p_ph: number | null; p_temperature: number | null; p_lux: number | null; p_pm25: number | null; p_humidity: number | null }; Returns: Json }
       yuam_register_node: {
         Args: { p_name: string; p_zone: string; p_lat: number; p_lng: number; p_token_hash: string }
         Returns: string

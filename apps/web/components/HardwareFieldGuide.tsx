@@ -54,7 +54,7 @@ with serial.Serial(PORT, BAUD, timeout=1) as port:
             continue
         if not isinstance(reading, dict) or not any(
             isinstance(reading.get(key), (int, float)) and not isinstance(reading.get(key), bool)
-            for key in ("co2_ppm", "ph", "temperatura", "lux", "pm25")
+            for key in ("co2_ppm", "ph", "temperatura", "lux", "pm25", "humedad")
         ):
             continue
         wait = INTERVAL - (time.monotonic() - last_success)

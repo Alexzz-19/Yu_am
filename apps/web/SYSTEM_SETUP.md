@@ -13,6 +13,7 @@ Configurar exclusivamente `apps/web/.env.local` en desarrollo y las variables eq
 Aplicar `supabase/migrations/202610250003_hardware_quota_map.sql` sobre el esquema desplegado antes de publicar esta versión.
 Aplicar después `202610250004_node_key_protection.sql`: elimina el acceso anónimo directo a claves y aplica RLS por propietario.
 Aplicar `202610250005_chat_history.sql`: crea el historial privado de Yum y actualiza la función de ingesta para aceptar como máximo una lectura por nodo cada 30 minutos.
+Aplicar `202610250006_dashboard_explorer.sql`: añade humedad a `readings`, categoría e institución opcionales a `nodes`, y publica `readings` en Supabase Realtime. Conserva la firma de ingesta anterior y las políticas de acceso por propietario.
 La tabla `public.nodes` contiene `id`, `user_id`, `name`, `country`, `city`, `lat`, `lng`, `token`, `created_at`, `board_type`, `algae_type` y `sensors`.
 El trigger `yuam_sync_reactor` mantiene su reactor (`node_id`, `user_id`, placa, cepa, sensores, ubicación y clave) dentro de la misma transacción.
 La creación, reubicación y rotación se revierten por completo si falla esa sincronización.
@@ -48,10 +49,16 @@ La ruta `/yum` y el widget comparten el historial autenticado en `yum_chat_histo
 ## Telemetría y mapa
 
 `POST /api/telemetry` recibe la clave del nodo en `Authorization: Bearer …` y valores opcionales
-`co2_ppm`, `ph`, `temperatura`, `lux`, `pm25` (al menos uno). La función `yuam_ingest_hardware`
+`co2_ppm`, `ph`, `temperatura`, `humedad`, `lux`, `pm25` (al menos uno). `humedad` se almacena como `readings.humidity`, en porcentaje entre 0 y 100. La función `yuam_ingest_hardware`
 asocia la lectura al reactor sincronizado, valida límites y aplica un intervalo mínimo de 30 minutos por nodo; los reintentos tempranos reciben HTTP 429 y `Retry-After`.
 Los valores PM2.5 se expresan en µg/m³; lux es iluminancia y temperatura está en °C.
 `yuam_public_node_stats` agrega en PostgreSQL la última lectura y las medias móviles de 7 y 30 días,
 sin truncar las lecturas ni sustituir valores ausentes por ceros. El mapa consulta estos datos cada 30 minutos.
+
+## Dashboard y explorador
+
+`/dashboard` utiliza `nodes → reactors → readings`. `GET /api/nodes/:id/readings` verifica el JWT y comprueba el propietario del nodo y del reactor mediante RLS y filtros explícitos antes de entregar las 96 últimas lecturas. No consulta las tablas antiguas `nodos_iot` ni `telemetria_mq135` y no genera mediciones de demostración.
+El panel privado escucha cambios de `readings` del reactor seleccionado y vuelve a consultar al conectar Realtime, recuperar el foco o cada minuto si se pierde un evento. Cambiar de nodo cancela las consultas y la suscripción anteriores.
+El catálogo público combina únicamente metadatos permitidos con la proyección de estadísticas; excluye `user_id`, tokens y coordenadas precisas. Las pestañas Guatemala y Comunidad Global se actualizan cada 30 minutos y filtran por texto, cepa y categoría. La categoría y la institución se editan desde el perfil; los nodos existentes permanecen sin categoría hasta que su propietario la indique.
 
 Soporte oficial: `Yuam_support@protonmail.com`.

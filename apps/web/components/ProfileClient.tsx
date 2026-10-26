@@ -10,7 +10,7 @@ import type { NodeSummary } from '@/lib/database.types'
 import { LOCATION_CATALOG, countryByName, locationForCoordinates, placeByName, type Coordinates } from '@/lib/locations'
 import NodeTokenDialog from '@/components/NodeTokenDialog'
 import Dialog from '@/components/ui/Dialog'
-import { ALGAE_TYPES, BOARD_TYPES, SENSOR_OPTIONS, type SensorType } from '@/lib/hardware'
+import { ALGAE_TYPES, BOARD_TYPES, NODE_CATEGORIES, SENSOR_OPTIONS, type SensorType } from '@/lib/hardware'
 
 const LeafletMap = dynamic(() => import('@/components/LeafletMap'), {
   ssr: false,
@@ -100,6 +100,8 @@ export default function ProfileClient() {
   const [name, setName] = useState('')
   const [boardType, setBoardType] = useState('ESP32')
   const [algaeType, setAlgaeType] = useState('Chlorella vulgaris')
+  const [nodeCategory, setNodeCategory] = useState('')
+  const [university, setUniversity] = useState('')
   const [sensors, setSensors] = useState<SensorType[]>(['ph', 'temperature'])
   const [nodeToDelete, setNodeToDelete] = useState<Node | null>(null)
   const [deletionError, setDeletionError] = useState('')
@@ -234,6 +236,7 @@ export default function ProfileClient() {
     try {
       const input = {
         board_type: boardType, algae_type: algaeType, sensors,
+        category: nodeCategory || null, university: university.trim() || null,
         name: name.trim(),
         country: nodeLocation.country,
         city: nodeLocation.city,
@@ -281,6 +284,8 @@ export default function ProfileClient() {
     setName('')
     setBoardType('ESP32')
     setAlgaeType('Chlorella vulgaris')
+    setNodeCategory('')
+    setUniversity('')
     setSensors(['ph', 'temperature'])
     setNodeLocation(emptyNodeLocation())
     setLocationMessage('Selecciona una ciudad, usa tu ubicación o marca un punto aproximado en el mapa.')
@@ -292,6 +297,8 @@ export default function ProfileClient() {
     setName(node.name)
     setBoardType(node.board_type)
     setAlgaeType(node.algae_type)
+    setNodeCategory(node.category ?? '')
+    setUniversity(node.university ?? '')
     setSensors(node.sensors.filter((sensor): sensor is SensorType => SENSOR_OPTIONS.some(option => option.value === sensor)))
     setNodeLocation({ country: node.country, city: node.city, lat: node.lat, lng: node.lng })
     setLocationMessage(`Reubicando ${node.name}. Pulsa en el mapa o arrástralo y guarda los cambios.`)
@@ -417,6 +424,8 @@ export default function ProfileClient() {
             <legend className="px-2 text-sm font-bold text-emerald-900">Hardware y cultivo</legend>
             <label className="text-sm font-bold text-slate-700">Placa / Controlador<select required value={boardType} onChange={event => setBoardType(event.target.value)} className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-slate-900">{!BOARD_TYPES.some(value => value === boardType) && <option>{boardType}</option>}{BOARD_TYPES.map(value => <option key={value}>{value}</option>)}</select></label>
             <label className="text-sm font-bold text-slate-700">Cepa de alga<select required value={algaeType} onChange={event => setAlgaeType(event.target.value)} className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-slate-900">{!ALGAE_TYPES.some(value => value === algaeType) && <option>{algaeType}</option>}{ALGAE_TYPES.map(value => <option key={value}>{value}</option>)}</select></label>
+            <label className="text-sm font-bold text-slate-700">Categoría del proyecto<select value={nodeCategory} onChange={event => setNodeCategory(event.target.value)} className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-slate-900"><option value="">Sin categoría</option>{NODE_CATEGORIES.map(category => <option key={category}>{category}</option>)}</select></label>
+            <label className="text-sm font-bold text-slate-700">Universidad / institución (opcional)<input value={university} maxLength={160} onChange={event => setUniversity(event.target.value)} placeholder="Nombre de tu institución" className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-slate-900" /></label>
             <div className="sm:col-span-2"><p className="text-sm font-bold text-slate-700">Sensores incluidos</p><div className="mt-2 flex flex-wrap gap-4">{SENSOR_OPTIONS.map(option => <label key={option.value} className="flex items-center gap-2 text-sm text-slate-700"><input type="checkbox" checked={sensors.includes(option.value)} onChange={event => setSensors(current => event.target.checked ? [...current, option.value] : current.filter(value => value !== option.value))} className="size-4 accent-emerald-700" />{option.label}</label>)}</div></div>
           </fieldset>
           <div className="lg:col-span-2">
@@ -424,6 +433,7 @@ export default function ProfileClient() {
               <p className="text-sm text-slate-600">{locationMessage}</p>
               <button type="button" onClick={useCurrentLocation} className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-bold text-emerald-900 transition hover:bg-emerald-100">📍 Usar mi ubicación aproximada</button>
             </div>
+            <h3 className="mt-4 text-sm font-bold text-slate-900">Ubicación del Nuevo Nodo (Haz clic en el mapa para marcar las coordenadas)</h3>
             <LeafletMap coordinates={nodeLocation} onCoordinatesChange={updateNodeCoordinates} />
             <p className="mt-2 text-xs text-slate-500">Ubicación elegida: {nodeLocation.lat.toFixed(4)}, {nodeLocation.lng.toFixed(4)}.</p>
           </div>
@@ -452,7 +462,7 @@ export default function ProfileClient() {
 Authorization: Bearer <NODE_TOKEN>
 Content-Type: application/json
 
-{"co2_ppm":520,"ph":7.1,"temperatura":26.5,"lux":850,"pm25":12.4}`}</code></pre>
+{"co2_ppm":520,"ph":7.1,"temperatura":26.5,"humedad":65,"lux":850,"pm25":12.4}`}</code></pre>
         <p className="mt-2 text-xs leading-5 text-slate-500">Sustituye <code>&lt;NODE_TOKEN&gt;</code> por la clave individual del nodo. El servidor responde HTTP 429 si intentas enviar antes de que transcurran 30 minutos desde la lectura anterior.</p>
       </section>
 

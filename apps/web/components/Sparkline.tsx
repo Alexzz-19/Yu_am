@@ -37,7 +37,7 @@ export default function Sparkline({
 
   if (puntos.length < 2) {
     return (
-      <div className="flex h-16 items-center justify-center text-xs text-[#4E7568]">
+      <div className="flex h-16 items-center justify-center text-xs text-[#A2C4B8]">
         sin datos suficientes
       </div>
     )

@@ -21,7 +21,7 @@ export default function PrivacyPage() {
       <h2>Datos que tratamos</h2>
       <ul>
         <li><strong>Cuenta:</strong> correo electrónico y datos de autenticación. Si eliges Google, Supabase recibe los datos de perfil que el proveedor comparte, como nombre, correo y avatar.</li>
-        <li><strong>Perfil y nodos:</strong> identificador de cuenta, nombre del nodo, zona y coordenadas que aportas. Las coordenadas se redondean a dos decimales y la vista pública muestra el nombre, ubicación aproximada, estado y hora de la última lectura.</li>
+        <li><strong>Perfil y nodos:</strong> identificador de cuenta, nombre del nodo, zona y coordenadas que aportas. Las coordenadas se redondean a dos decimales y la vista pública muestra el nombre, ubicación aproximada, estado, cepa, categoría e institución que indiques, estadísticas y hora de la última lectura.</li>
         <li><strong>Telemetría:</strong> lecturas asociadas a tus nodos o reactores: estimación de CO₂ y calidad del aire, temperatura, humedad, pH, oxígeno disuelto, estado del búfer y marcas de tiempo, según los sensores y campos disponibles.</li>
         <li><strong>Seguridad:</strong> tokens de sesión, datos técnicos de las solicitudes y verificaciones anti-bot necesarias para operar y proteger la cuenta.</li>
         <li><strong>Asistente:</strong> si consultas a Yum, la pregunta y hasta cinco fragmentos coincidentes de la bóveda de memoria se envían a Google Gemini para generar la respuesta. Las preguntas y respuestas se guardan en Supabase asociadas a tu cuenta; RLS permite leerlas o insertar mensajes solo al propietario. El historial se elimina al eliminar la cuenta.</li>

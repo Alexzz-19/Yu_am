@@ -12,6 +12,7 @@ export async function POST(request: Request) {
     try { input = parseTelemetry(body) } catch (error) { throw new ApiError(400, (error as Error).message) }
     const { data, error } = await serverSupabase(true).rpc('yuam_ingest_hardware', {
       p_token: token, p_ppm: input.co2_ppm, p_ph: input.ph, p_temperature: input.temperatura, p_lux: input.lux, p_pm25: input.pm25,
+      p_humidity: input.humedad,
     })
     if (error) throw error
     if (!data || typeof data !== 'object' || Array.isArray(data)) throw new Error('Invalid RPC response')

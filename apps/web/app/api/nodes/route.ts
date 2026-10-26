@@ -2,15 +2,14 @@ import { apiFailure, authenticated, databaseFailure, generateIngestToken, json, 
 import { parseNode } from '@/lib/telemetry-validation'
 import { DELETE as deleteById } from './[id]/route'
 import { NODE_FIELDS, parseHardware } from '@/lib/hardware'
+import { communityNodes } from '@/lib/community-nodes'
 
 export const runtime = 'nodejs'
 
 export async function GET(request: Request) {
   try {
     if (new URL(request.url).searchParams.get('scope') === 'community') {
-      const { data, error } = await serverSupabase(true).rpc('yuam_public_node_stats')
-      if (error) databaseFailure(error)
-      return json({ nodes: data ?? [] })
+      return json({ nodes: await communityNodes() })
     }
     const { user } = await authenticated(request)
     const { data, error } = await serverSupabase(true).from('nodes').select(NODE_FIELDS).eq('user_id', user.id).order('created_at', { ascending: false })

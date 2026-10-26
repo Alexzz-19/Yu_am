@@ -6,6 +6,7 @@ const METRICS: Array<{ key: keyof TelemetryMetrics; label: string; unit: string;
   { key: 'temperature', label: 'Temperatura', unit: '°C', digits: 1 },
   { key: 'ph', label: 'pH', unit: '', digits: 2 },
   { key: 'lux', label: 'Luz', unit: 'lux', digits: 0 },
+  { key: 'humidity', label: 'Humedad', unit: '%', digits: 1 },
 ]
 
 function format(value: number | null | undefined, digits: number) {
