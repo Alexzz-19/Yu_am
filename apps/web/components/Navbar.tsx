@@ -38,6 +38,9 @@ export default function Navbar() {
           <Link href="/hardware" className="transition hover:text-emerald-600">
             Hardware
           </Link>
+          <Link href="/yum" className="transition hover:text-emerald-600">
+            Yum
+          </Link>
           <Link href="/dashboard" className="transition hover:text-emerald-600">
             Dashboard
           </Link>

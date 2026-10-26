@@ -447,12 +447,13 @@ export default function ProfileClient() {
         <h2 className="text-2xl font-black tracking-tight text-slate-950">Conectar tu hardware</h2>
         <p className="mt-2 text-sm leading-6 text-slate-600">Selecciona tu nodo para consultar o copiar su clave API. Tu dispositivo envía las mediciones a esta plataforma y se guardan en Supabase; nunca uses una clave de administración en el firmware.</p>
         <div className="mt-5 flex flex-wrap items-end gap-3"><label className="min-w-48 flex-1 text-sm font-bold text-slate-700">Nodo<select value={apiNodeId} onChange={event => setApiNodeId(event.target.value)} className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-slate-900"><option value="">Selecciona un nodo</option>{nodes.map(node => <option key={node.id} value={node.id}>{node.name}</option>)}</select></label><button type="button" disabled={!apiNodeId || busy} onClick={viewApiKey} className="rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-emerald-800 disabled:opacity-50">Consultar / Copiar API Key</button></div>
-        <p className="mt-5 text-sm font-semibold text-slate-800">Ejemplo de envío (máximo una lectura por minuto)</p>
+        <p className="mt-5 text-sm font-semibold text-slate-800">Endpoint de telemetría · máximo estricto de una lectura cada 30 minutos por nodo</p>
         <pre className="mt-2 overflow-x-auto rounded-xl bg-slate-950 p-4 text-xs leading-6 text-emerald-200"><code>{`POST https://yuam.tech/api/telemetry
-Authorization: Bearer TU_CLAVE_DEL_NODO
+Authorization: Bearer <NODE_TOKEN>
 Content-Type: application/json
 
 {"co2_ppm":520,"ph":7.1,"temperatura":26.5,"lux":850,"pm25":12.4}`}</code></pre>
+        <p className="mt-2 text-xs leading-5 text-slate-500">Sustituye <code>&lt;NODE_TOKEN&gt;</code> por la clave individual del nodo. El servidor responde HTTP 429 si intentas enviar antes de que transcurran 30 minutos desde la lectura anterior.</p>
       </section>
 
       <section className="rounded-[2rem] border border-rose-200 bg-rose-50/40 p-6 lg:p-8">

@@ -17,8 +17,8 @@ export async function POST(request: Request) {
     if (!data || typeof data !== 'object' || Array.isArray(data)) throw new Error('Invalid RPC response')
     if (data.status === 'unauthorized') throw new ApiError(401, 'Token de ingesta inválido.')
     if (data.status === 'rate_limited') {
-      const seconds = typeof data.retry_after === 'number' ? Math.max(1, Math.min(60, Math.ceil(data.retry_after))) : 60
-      return json({ error: 'Frecuencia de envío superada. Máximo 1 lectura por minuto' }, 429, { 'Retry-After': String(seconds) })
+      const seconds = typeof data.retry_after === 'number' ? Math.max(1, Math.min(1800, Math.ceil(data.retry_after))) : 1800
+      return json({ error: 'Frecuencia de envío superada. Máximo 1 lectura cada 30 minutos por nodo.', retry_after: seconds }, 429, { 'Retry-After': String(seconds) })
     }
     if (data.status !== 'accepted') throw new Error('Invalid RPC status')
     return json({ nodo_id: data.nodo_id, estado: 'Activo', created_at: data.created_at }, 201)

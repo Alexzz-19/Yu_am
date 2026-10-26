@@ -188,23 +188,21 @@ void loop() {
   Serial.print(F(",\"nodo\":\"yuam-arduino\"}"));
   Serial.println();
 
-  delay(30000);
+  delay(30UL * 60UL * 1000UL); // Máximo un envío cada 30 minutos
 }`.trim()
 
 const CODIGO_ESP32 = String.raw`// ============================================================
-// YU'AM — Firmware ESP32 (Telemetría directa por Wi-Fi)
-// Envía tramas JSON al Dashboard YU'AM vía HTTP.
-// Librerías: WiFi.h, HTTPClient.h, ArduinoJson.h
+// YU'AM — Firmware ESP32 (telemetría directa segura por Wi-Fi)
+// Librerías: WiFi.h y HTTPClient.h (incluidas con el core ESP32)
 // ============================================================
 
 #include <WiFi.h>
 #include <HTTPClient.h>
-#include <ArduinoJson.h>
 
 const char* WIFI_SSID = "TU_RED_WIFI";
 const char* WIFI_PASS = "TU_CONTRASENA";
-const char* ENDPOINT  = "https://TU_PROYECTO.supabase.co/rest/v1/telemetria_mq135";
-const char* API_KEY   = "TU_SUPABASE_ANON_KEY";
+const char* ENDPOINT  = "https://yuam.tech/api/telemetry";
+const char* NODE_TOKEN = "yua_live_TU_TOKEN"; // Token individual del nodo; nunca uses claves Supabase
 
 #define PIN_MQ135 34
 
@@ -223,26 +221,18 @@ void loop() {
   float co2_ppm = map(lectura, 0, 4095, 300, 2000);
 
   if (WiFi.status() == WL_CONNECTED) {
-    StaticJsonDocument<256> doc;
-    doc["ppm_co2"] = co2_ppm;
-    doc["calidad_aire"] = 90.0;
-    doc["temperatura"] = 26.5;
-    doc["humedad"] = 78.0;
-
-    String payload;
-    serializeJson(doc, payload);
-
+    String payload = String("{\"co2_ppm\":") + String(co2_ppm, 1) + "}";
     HTTPClient http;
-    http.begin(ENDPOINT);
-    http.addHeader("apikey", API_KEY);
-    http.addHeader("Authorization", String("Bearer ") + API_KEY);
-    http.addHeader("Content-Type", "application/json");
-    int code = http.POST(payload);
-    Serial.printf("HTTP %d\n", code);
-    http.end();
+    if (http.begin(ENDPOINT)) {
+      http.addHeader("Authorization", String("Bearer ") + NODE_TOKEN);
+      http.addHeader("Content-Type", "application/json");
+      int code = http.POST(payload);
+      Serial.printf("HTTP %d\n", code);
+      http.end();
+    }
   }
 
-  delay(30000);
+  delay(30UL * 60UL * 1000UL); // Servidor valida también el intervalo de 30 minutos
 }`.trim()
 
 function seleccionInicial(): Record<string, boolean> {

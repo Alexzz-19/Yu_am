@@ -12,6 +12,7 @@ Configurar exclusivamente `apps/web/.env.local` en desarrollo y las variables eq
 
 Aplicar `supabase/migrations/202610250003_hardware_quota_map.sql` sobre el esquema desplegado antes de publicar esta versión.
 Aplicar después `202610250004_node_key_protection.sql`: elimina el acceso anónimo directo a claves y aplica RLS por propietario.
+Aplicar `202610250005_chat_history.sql`: crea el historial privado de Yum y actualiza la función de ingesta para aceptar como máximo una lectura por nodo cada 30 minutos.
 La tabla `public.nodes` contiene `id`, `user_id`, `name`, `country`, `city`, `lat`, `lng`, `token`, `created_at`, `board_type`, `algae_type` y `sensors`.
 El trigger `yuam_sync_reactor` mantiene su reactor (`node_id`, `user_id`, placa, cepa, sensores, ubicación y clave) dentro de la misma transacción.
 La creación, reubicación y rotación se revierten por completo si falla esa sincronización.
@@ -42,12 +43,13 @@ La bienvenida se muestra localmente y no consume cuota. `GET /api/chat` consulta
 El límite es por usuario y día UTC, compartido entre pestañas, sesiones y servidores; el reinicio es a medianoche UTC.
 Las preguntas inválidas no consumen cuota. Una petición técnica válida ya reservada sí cuenta aunque falle el proveedor.
 Sin acceso a la cuota persistente, el servidor rechaza la generación: nunca habilita una cuota local ilimitada.
+La ruta `/yum` y el widget comparten el historial autenticado en `yum_chat_history`; se recuperan hasta 60 mensajes recientes y cada consulta/respuesta se inserta bajo RLS para el propietario.
 
 ## Telemetría y mapa
 
 `POST /api/telemetry` recibe la clave del nodo en `Authorization: Bearer …` y valores opcionales
 `co2_ppm`, `ph`, `temperatura`, `lux`, `pm25` (al menos uno). La función `yuam_ingest_hardware`
-asocia la lectura al reactor sincronizado, valida límites y aplica un intervalo mínimo de 60 segundos.
+asocia la lectura al reactor sincronizado, valida límites y aplica un intervalo mínimo de 30 minutos por nodo; los reintentos tempranos reciben HTTP 429 y `Retry-After`.
 Los valores PM2.5 se expresan en µg/m³; lux es iluminancia y temperatura está en °C.
 `yuam_public_node_stats` agrega en PostgreSQL la última lectura y las medias móviles de 7 y 30 días,
 sin truncar las lecturas ni sustituir valores ausentes por ceros. El mapa consulta estos datos cada 30 minutos.

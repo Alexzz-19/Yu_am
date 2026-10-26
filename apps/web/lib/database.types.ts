@@ -105,6 +105,7 @@ export type Database = {
       reactors: Table<HardwareReactor>
       boveda_memoria: Table<BovedaMemoria>
       yuam_chat_usage: Table<{ user_id: string; usage_date: string; used: number }>
+      yum_chat_history: Table<{ id: string; user_id: string; role: 'user' | 'assistant'; content: string; created_at: string }>
     }
     Views: { [_ in never]: never }
     Functions: {

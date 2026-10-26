@@ -19,8 +19,136 @@ function download(content: string, filename: string, type: string) {
 
 export default function HardwareFieldGuide() {
   const [language, setLanguage] = useState<BridgeLanguage>('python')
+  const [connectionGuide, setConnectionGuide] = useState<'python' | 'esp32' | 'arduino'>('python')
   const [copyStatus, setCopyStatus] = useState('')
   const script = BRIDGE_SCRIPTS[language]
+
+  const connectionExamples = {
+    python: {
+      label: 'Python · Script puente',
+      filename: 'puente_yuam.py',
+      setup: 'python -m pip install pyserial\n# Linux: SERIAL_PORT=/dev/ttyUSB0 NODE_TOKEN=yua_live_… python puente_yuam.py\n# Windows PowerShell: $env:SERIAL_PORT="COM3"; $env:NODE_TOKEN="yua_live_…"; python puente_yuam.py',
+      source: String.raw`import json
+import os
+import time
+from urllib.request import Request, urlopen
+from urllib.error import HTTPError, URLError
+
+import serial
+
+ENDPOINT = "https://yuam.tech/api/telemetry"
+TOKEN = os.environ["NODE_TOKEN"]
+PORT = os.getenv("SERIAL_PORT", "/dev/ttyUSB0")
+BAUD = int(os.getenv("BAUD_RATE", "115200"))
+INTERVAL = 30 * 60  # Un envío cada 30 minutos como máximo
+last_success = 0.0
+
+with serial.Serial(PORT, BAUD, timeout=1) as port:
+    while True:
+        raw = port.readline()
+        if not raw:
+            continue
+        try:
+            reading = json.loads(raw.decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            continue
+        if not isinstance(reading, dict) or not any(
+            isinstance(reading.get(key), (int, float)) and not isinstance(reading.get(key), bool)
+            for key in ("co2_ppm", "ph", "temperatura", "lux", "pm25")
+        ):
+            continue
+        wait = INTERVAL - (time.monotonic() - last_success)
+        if last_success and wait > 0:
+            print(f"Lectura serial omitida; faltan {int(wait)} segundos para el siguiente envío")
+            continue
+        request = Request(ENDPOINT, data=json.dumps(reading).encode("utf-8"), method="POST",
+            headers={"Authorization": f"Bearer {TOKEN}", "Content-Type": "application/json"})
+        try:
+            with urlopen(request, timeout=15) as response:
+                print("YU'AM HTTP", response.status)
+                last_success = time.monotonic()
+        except HTTPError as error:
+            print("YU'AM HTTP", error.code, error.read().decode("utf-8", errors="replace"))
+        except (URLError, TimeoutError) as error:
+            print("Envío no confirmado; se conservará la siguiente lectura:", error)`
+    },
+    esp32: {
+      label: 'ESP32 · Arduino IDE por Wi-Fi',
+      filename: 'esp32_yuam.ino',
+      setup: 'Instala el core ESP32 en Arduino IDE. Edita WIFI_SSID, WIFI_PASSWORD y NODE_TOKEN antes de cargar.',
+      source: String.raw`#include <WiFi.h>
+#include <HTTPClient.h>
+
+const char* WIFI_SSID = "TU_RED_WIFI";
+const char* WIFI_PASSWORD = "TU_CONTRASENA";
+const char* NODE_TOKEN = "yua_live_TU_TOKEN"; // Clave de este nodo, nunca una clave Supabase
+const char* ENDPOINT = "https://yuam.tech/api/telemetry";
+constexpr int PIN_MQ135 = 34; // ADC1 en ESP32 clásico
+constexpr unsigned long INTERVAL_MS = 30UL * 60UL * 1000UL;
+
+void setup() {
+  Serial.begin(115200);
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+  while (WiFi.status() != WL_CONNECTED) delay(500);
+}
+
+void loop() {
+  if (WiFi.status() == WL_CONNECTED) {
+    const int raw = analogRead(PIN_MQ135);
+    const float co2Ppm = 300.0f + (1700.0f * raw / 4095.0f); // Aproximación; calibra el MQ-135
+    const String body = String("{\"co2_ppm\":") + String(co2Ppm, 1) + "}";
+    HTTPClient http;
+    if (http.begin(ENDPOINT)) {
+      http.addHeader("Authorization", String("Bearer ") + NODE_TOKEN);
+      http.addHeader("Content-Type", "application/json");
+      const int status = http.POST(body);
+      Serial.printf("Telemetría YU'AM: HTTP %d\n", status);
+      http.end();
+    }
+  }
+  delay(INTERVAL_MS); // El servidor también rechaza envíos antes de 30 minutos
+}`
+    },
+    arduino: {
+      label: 'Arduino Serial + puente Python',
+      filename: 'arduino_serial_yuam.ino + puente_serial.py',
+      setup: 'Carga el sketch desde Arduino IDE; cierra su monitor serie. Instala pyserial y define NODE_TOKEN y SERIAL_PORT para ejecutar el puente Python.',
+      firmware: String.raw`// Sketch Arduino UNO / Nano (9600 baudios)
+#define PIN_MQ135 A0
+unsigned long lastSample = 0;
+const unsigned long INTERVAL_MS = 30UL * 60UL * 1000UL;
+
+void setup() { Serial.begin(9600); }
+
+void loop() {
+  if (lastSample != 0 && millis() - lastSample < INTERVAL_MS) { delay(1000); return; }
+  lastSample = millis();
+  const int raw = analogRead(PIN_MQ135);
+  const float co2Ppm = 300.0f + (1700.0f * raw / 1023.0f); // Aproximación; calibra el sensor
+  Serial.print(F("{\"co2_ppm\":"));
+  Serial.print(co2Ppm, 1);
+  Serial.println(F("}")); // El puente envía esta trama al endpoint YU'AM
+}`,
+      source: String.raw`# puente_serial.py (requiere: python -m pip install pyserial)
+import json, os
+from urllib.request import Request, urlopen
+import serial
+
+token = os.environ["NODE_TOKEN"]
+port = serial.Serial(os.getenv("SERIAL_PORT", "/dev/ttyACM0"), 9600, timeout=1)
+for line in port:
+    try:
+        reading = json.loads(line)
+        request = Request("https://yuam.tech/api/telemetry", data=json.dumps(reading).encode(),
+            headers={"Authorization": "Bearer " + token, "Content-Type": "application/json"}, method="POST")
+        with urlopen(request, timeout=15) as response:
+            print("YU'AM HTTP", response.status)
+    except (ValueError, OSError) as error:
+        print("No se pudo procesar/enviar la lectura:", error)
+    # El Arduino ya limita la lectura a una cada 30 minutos; el servidor la valida de nuevo.`
+    },
+  } as const
+  const currentConnection = connectionExamples[connectionGuide]
 
   async function copyScript() {
     try {
@@ -31,8 +159,31 @@ export default function HardwareFieldGuide() {
     }
   }
 
+  async function copyConnectionExample() {
+    try {
+      const code = 'firmware' in currentConnection ? `${currentConnection.firmware}\n\n${currentConnection.source}` : currentConnection.source
+      await navigator.clipboard.writeText(code)
+      setCopyStatus('Guía de conexión copiada.')
+    } catch {
+      setCopyStatus('No se pudo copiar. Selecciona el código para copiarlo.')
+    }
+  }
+
   return (
     <div className="mt-10 space-y-10">
+      <section aria-labelledby="telemetry-guides-title" className="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-6">
+        <p className="text-xs font-bold uppercase tracking-[0.16em] text-emerald-800">Ingesta segura</p>
+        <h2 id="telemetry-guides-title" className="mt-1 text-xl font-bold text-slate-950">Conecta cualquier placa a YU&apos;AM</h2>
+        <p className="mt-2 max-w-3xl text-sm leading-relaxed text-slate-700">Endpoint: <code className="rounded bg-white px-1.5 py-0.5">https://yuam.tech/api/telemetry</code>. Incluye <code className="rounded bg-white px-1.5 py-0.5">Authorization: Bearer &lt;NODE_TOKEN&gt;</code> y envía como máximo una lectura cada 30 minutos por nodo. La API responde HTTP 429 si el intervalo todavía no se cumple.</p>
+        <div role="tablist" aria-label="Guías de conexión por hardware" className="mt-5 flex flex-wrap gap-2">{(Object.keys(connectionExamples) as Array<keyof typeof connectionExamples>).map(id => <button key={id} type="button" role="tab" aria-selected={connectionGuide === id} onClick={() => { setConnectionGuide(id); setCopyStatus('') }} className={`rounded-xl px-4 py-2.5 text-sm font-semibold ${connectionGuide === id ? 'bg-emerald-800 text-white' : 'border border-emerald-200 bg-white text-emerald-900 hover:bg-emerald-100'}`}>{connectionExamples[id].label}</button>)}</div>
+        <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-slate-500">Preparación</p>
+        <pre className={codeClass}><code>{currentConnection.setup}</code></pre>
+        <div className="mt-4 flex items-center justify-between gap-3"><p className="text-sm font-semibold text-slate-800">{currentConnection.filename}</p><button type="button" onClick={copyConnectionExample} className={buttonClass}>Copiar guía</button></div>
+        {'firmware' in currentConnection && <><p className="mt-4 text-xs font-semibold uppercase tracking-wide text-slate-500">Firmware Arduino IDE</p><pre className={codeClass}><code>{currentConnection.firmware}</code></pre><p className="mt-4 text-xs font-semibold uppercase tracking-wide text-slate-500">Puente Python</p></>}
+        <pre role="tabpanel" className={codeClass}><code>{currentConnection.source}</code></pre>
+        <p role="status" className="mt-2 text-sm text-slate-600">{copyStatus}</p>
+        <p className="mt-3 text-xs leading-5 text-slate-600">Guarda el token como secreto fuera del firmware publicado. La conversión del MQ-135 del ejemplo es orientativa y requiere calibración; se recomienda un entorno de medición ventilado y estable.</p>
+      </section>
       <section aria-labelledby="offline-title" className="rounded-2xl border border-emerald-200 bg-emerald-50 p-6">
         <h2 id="offline-title" className="text-lg font-semibold text-emerald-900">📊 Alternativas de Registro Offline</h2>
         <p className="mt-3 max-w-3xl text-sm leading-relaxed text-emerald-900">
