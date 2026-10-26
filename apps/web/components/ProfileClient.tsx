@@ -1,13 +1,14 @@
 'use client'
 
 import dynamic from 'next/dynamic'
-import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/use-auth'
 import { nodeRequest } from '@/lib/node-api'
 import { supabase } from '@/lib/supabaseClient'
 import type { NodeSummary } from '@/lib/database.types'
 import { LOCATION_CATALOG, countryByName, locationForCoordinates, placeByName, type Coordinates } from '@/lib/locations'
+import NodeTokenDialog from '@/components/NodeTokenDialog'
 
 const LeafletMap = dynamic(() => import('@/components/LeafletMap'), {
   ssr: false,
@@ -104,6 +105,9 @@ export default function ProfileClient() {
   const [busy, setBusy] = useState(false)
   const [profileSaving, setProfileSaving] = useState(false)
   const [secret, setSecret] = useState<NodeSecret | null>(null)
+  const [editingNodeId, setEditingNodeId] = useState<string | null>(null)
+  const nodeForm = useRef<HTMLFormElement>(null)
+  const nodesRevision = useRef(0)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [deleteConfirmed, setDeleteConfirmed] = useState(false)
 
@@ -113,8 +117,9 @@ export default function ProfileClient() {
   const nodeReady = name.trim().length > 0 && nodeLocation.country.length > 0 && nodeLocation.city.length > 0 && Number.isFinite(nodeLocation.lat) && Number.isFinite(nodeLocation.lng)
 
   const loadNodes = useCallback(async () => {
+    const revision = nodesRevision.current
     const result = await nodeRequest<{ nodes: Node[] }>('/api/nodes')
-    setNodes(result.nodes)
+    if (revision === nodesRevision.current) setNodes(result.nodes)
   }, [])
 
   useEffect(() => {
@@ -219,19 +224,27 @@ export default function ProfileClient() {
     setBusy(true)
     setMessage('')
     try {
-      const result = await nodeRequest<NodeRegistration>('/api/nodes', 'POST', {
+      const input = {
         name: name.trim(),
         country: nodeLocation.country,
         city: nodeLocation.city,
         lat: nodeLocation.lat,
         lng: nodeLocation.lng,
-      })
-      setSecret(result)
+      }
+      if (editingNodeId) {
+        const { node } = await nodeRequest<{ node: Node }>(`/api/nodes/${editingNodeId}`, 'PATCH', { ...input, action: 'relocate' })
+        nodesRevision.current += 1
+        setNodes(current => current.map(entry => entry.id === node.id ? node : entry))
+        resetNodeForm()
+        setMessage('Ubicación del nodo actualizada. Su token sigue siendo válido.')
+        return
+      }
+      const result = await nodeRequest<NodeRegistration>('/api/nodes', 'POST', input)
+      setSecret({ id: result.id, token: result.token })
+      nodesRevision.current += 1
       setNodes(current => [result.node, ...current.filter(node => node.id !== result.node.id)])
-      setName('')
-      setNodeLocation(emptyNodeLocation())
+      resetNodeForm()
       setMessage('¡Nodo guardado exitosamente! Token generado.')
-      try { await loadNodes() } catch { /* El nodo confirmado sigue visible; se recargará desde Supabase. */ }
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'No se pudo registrar el nodo.')
     } finally {
@@ -240,6 +253,7 @@ export default function ProfileClient() {
   }
 
   async function rotateNode(node: Node) {
+    if (busy) return
     setBusy(true)
     setMessage('')
     try {
@@ -248,6 +262,40 @@ export default function ProfileClient() {
       setMessage('Token rotado. Guarda el nuevo token antes de cerrar esta pantalla.')
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'No se pudo rotar la clave.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  function resetNodeForm() {
+    setEditingNodeId(null)
+    setName('')
+    setNodeLocation(emptyNodeLocation())
+    setLocationMessage('Selecciona una ciudad, usa tu ubicación o marca un punto aproximado en el mapa.')
+  }
+
+  function editNode(node: Node) {
+    if (busy) return
+    setEditingNodeId(node.id)
+    setName(node.name)
+    setNodeLocation({ country: node.country, city: node.city, lat: node.lat, lng: node.lng })
+    setLocationMessage(`Reubicando ${node.name}. Pulsa en el mapa o arrástralo y guarda los cambios.`)
+    nodeForm.current?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'center' })
+  }
+
+  async function deleteNode(node: Node) {
+    if (busy || !window.confirm(`¿Eliminar el nodo «${node.name}»? Su token dejará de ser válido.`)) return
+    setBusy(true)
+    setMessage('')
+    try {
+      await nodeRequest<{ deleted: boolean }>('/api/nodes', 'DELETE', { id: node.id })
+      nodesRevision.current += 1
+      setNodes(current => current.filter(entry => entry.id !== node.id))
+      if (editingNodeId === node.id) resetNodeForm()
+      if (secret?.id === node.id) setSecret(null)
+      setMessage('Nodo eliminado y token revocado.')
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'No se pudo eliminar el nodo.')
     } finally {
       setBusy(false)
     }
@@ -317,10 +365,10 @@ export default function ProfileClient() {
       <section className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm lg:p-8">
         <div className="max-w-2xl">
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-700">Red de sensores</p>
-          <h2 className="mt-1 text-2xl font-black tracking-tight text-slate-950">Registra un nodo sin coordenadas manuales</h2>
+          <h2 className="mt-1 text-2xl font-black tracking-tight text-slate-950">{editingNodeId ? `Editar ubicación de ${name}` : 'Registra un nodo sin coordenadas manuales'}</h2>
           <p className="mt-2 text-sm leading-6 text-slate-600">Usa país y ciudad como referencia; la ubicación solo se usa para situar tu medición ambiental de forma aproximada.</p>
         </div>
-        <form onSubmit={registerNode} className="mt-6 grid gap-4 lg:grid-cols-2">
+        <form ref={nodeForm} onSubmit={registerNode} className="mt-6 grid gap-4 lg:grid-cols-2">
           <label className="text-sm font-bold text-slate-700">Nombre del nodo
             <input value={name} onChange={event => setName(event.target.value)} required maxLength={80} placeholder={`Ej. Laboratorio ${nodeLocation.city}`} className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100" />
           </label>
@@ -328,12 +376,14 @@ export default function ProfileClient() {
             <label className="text-sm font-bold text-slate-700">País
               <select value={nodeLocation.country} required onChange={event => changeNodeCountry(event.target.value)} className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100">
                 <option value="" disabled>Selecciona un país</option>
+                {nodeLocation.country && !LOCATION_CATALOG.some(country => country.name === nodeLocation.country) && <option value={nodeLocation.country}>{nodeLocation.country}</option>}
                 {LOCATION_CATALOG.map(country => <option key={country.name} value={country.name} disabled={country.disabled}>{country.name}</option>)}
               </select>
             </label>
             <label className="text-sm font-bold text-slate-700">{nodeLocation.country === 'Guatemala' ? 'Departamento' : 'Ciudad / zona'}
               <select value={nodeLocation.city} required onChange={event => changeNodePlace(event.target.value)} className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100">
                 <option value="" disabled>Selecciona una ubicación</option>
+                {nodeLocation.city && !selectedNodeCountry?.places.some(place => place.name === nodeLocation.city) && <option value={nodeLocation.city}>{nodeLocation.city}</option>}
                 {selectedNodeCountry?.places.map(place => <option key={place.name} value={place.name}>{place.name}</option>)}
               </select>
             </label>
@@ -348,15 +398,16 @@ export default function ProfileClient() {
           </div>
           <div className="lg:col-span-2">
             {!nodeReady && <p role="alert" className="mb-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">Ingresa un nombre y selecciona país y departamento o ciudad para registrar el nodo.</p>}
-            <button type="submit" disabled={busy || !nodeReady} className="rounded-xl bg-slate-950 px-5 py-3 text-sm font-bold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50">{busy ? 'Registrando…' : 'Registrar nodo'}</button>
+            <button type="submit" disabled={busy || !nodeReady} className="rounded-xl bg-slate-950 px-5 py-3 text-sm font-bold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50">{busy ? 'Guardando…' : editingNodeId ? 'Guardar ubicación' : 'Registrar nodo'}</button>
+            {editingNodeId && <button type="button" disabled={busy} onClick={resetNodeForm} className="ml-3 rounded-xl border border-slate-300 px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50">Cancelar edición</button>}
           </div>
         </form>
 
-        {secret && <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950"><p className="font-bold">Token de {secret.id}</p><code className="mt-2 block select-all break-all rounded-lg bg-white p-3 text-xs">{secret.token}</code><p className="mt-2 text-xs">Este token solo se muestra ahora. Guárdalo en un lugar seguro.</p></div>}
+        {secret && <NodeTokenDialog token={secret.token} nodeId={secret.id} onClose={() => setSecret(null)} />}
 
         <div className="mt-8 border-t border-slate-100 pt-6">
           <h3 className="font-bold text-slate-950">Nodos registrados</h3>
-          {nodesLoading ? <p className="mt-3 text-sm text-slate-500">Cargando nodos…</p> : nodes.length === 0 ? <p className="mt-3 text-sm text-slate-500">Aún no tienes nodos registrados.</p> : <ul className="mt-3 grid gap-3">{nodes.map(node => <li key={node.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-100 px-4 py-3"><div><p className="font-bold text-slate-900">{node.name}</p><p className="text-xs text-slate-500">{node.city}, {node.country}</p></div><button type="button" disabled={busy} onClick={() => rotateNode(node)} className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50">Rotar token</button></li>)}</ul>}
+          {nodesLoading ? <p className="mt-3 text-sm text-slate-500">Cargando nodos…</p> : nodes.length === 0 ? <p className="mt-3 text-sm text-slate-500">Aún no tienes nodos registrados.</p> : <ul className="mt-3 grid gap-3">{nodes.map(node => <li key={node.id} className={`flex flex-wrap items-center justify-between gap-3 rounded-xl border px-4 py-3 ${editingNodeId === node.id ? 'border-emerald-300 bg-emerald-50' : 'border-slate-100'}`}><div><p className="font-bold text-slate-900">{node.name}</p><p className="text-xs text-slate-500">{node.city}, {node.country}</p></div><div className="flex flex-wrap gap-2"><button type="button" disabled={busy} onClick={() => editNode(node)} className="rounded-lg border border-emerald-200 px-3 py-2 text-xs font-bold text-emerald-800 hover:bg-emerald-50 disabled:opacity-50">Editar ubicación<span className="sr-only"> de {node.name}</span></button><button type="button" disabled={busy} onClick={() => rotateNode(node)} className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-50">Rotar token<span className="sr-only"> de {node.name}</span></button><button type="button" disabled={busy} onClick={() => deleteNode(node)} className="rounded-lg border border-rose-200 px-3 py-2 text-xs font-bold text-rose-700 hover:bg-rose-50 disabled:opacity-50">Eliminar nodo<span className="sr-only"> {node.name}</span></button></div></li>)}</ul>}
         </div>
       </section>
 

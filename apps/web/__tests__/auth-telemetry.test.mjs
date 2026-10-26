@@ -162,4 +162,47 @@ describe('gestión de nodos', () => {
     assert.equal((await route.PATCH(request({}), context)).status, 404)
     assert.equal((await route.DELETE(request({}), context)).status, 404)
   })
+
+  it('reubica solo el nodo del propietario sin cambiar su token', async () => {
+    const id = '11111111-1111-4111-8111-111111111111'
+    let updated
+    const filters = {}
+    const route = modules({
+      auth: { getUser: async () => ({ data: { user: { id: 'owner' } }, error: null }) },
+      from: table => {
+        assert.equal(table, 'nodes')
+        const query = {
+          eq: (column, value) => { filters[column] = value; return query },
+          select: columns => { assert.ok(!columns.split(',').includes('token')); return query },
+          maybeSingle: async () => ({ data: { id, user_id: 'owner', ...updated }, error: null }),
+        }
+        return { update: input => { updated = input; return query } }
+      },
+    })('app/api/nodes/[id]/route.ts')
+    const response = await route.PATCH(request({ action: 'relocate', name: 'Cultivo', country: 'Guatemala', city: 'Petén', lat: 16.9226, lng: -89.892 }), { params: Promise.resolve({ id }) })
+    assert.equal(response.status, 200)
+    const { node } = await response.json()
+    assert.equal(node.city, 'Petén')
+    assert.equal(updated.lat, 16.92)
+    assert.ok(!('token' in updated))
+    assert.deepEqual(filters, { id, user_id: 'owner' })
+  })
+
+  it('DELETE /api/nodes elimina únicamente el id indicado y su propietario verificado', async () => {
+    const id = '11111111-1111-4111-8111-111111111111'
+    const filters = {}
+    const route = modules({
+      auth: { getUser: async () => ({ data: { user: { id: 'owner' } }, error: null }) },
+      from: table => {
+        assert.equal(table, 'nodes')
+        const query = { eq: (column, value) => { filters[column] = value; return query }, select: () => query, maybeSingle: async () => ({ data: { id }, error: null }) }
+        return { delete: () => query }
+      },
+    })('app/api/nodes/route.ts')
+    const response = await route.DELETE(request({ id, user_id: 'other' }))
+    assert.equal(response.status, 200)
+    assert.equal((await response.json()).deleted, true)
+    assert.deepEqual(filters, { id, user_id: 'owner' })
+    assert.equal((await route.DELETE(request({ id: 'invalid' }))).status, 400)
+  })
 })

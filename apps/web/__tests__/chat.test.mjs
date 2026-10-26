@@ -11,7 +11,7 @@ const require = createRequire(import.meta.url)
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const note = { id: 'note-1', titulo: 'Calibración de pH', contenido: 'Usa dos soluciones tampón para calibrar el sensor de pH.', etiquetas: ['ph', 'sensores'] }
 
-function routeWith({ user = { id: 'researcher', is_anonymous: false }, notes = [note], key = 'server-secret', fetch: fakeFetch = async () => Response.json({ candidates: [{ content: { parts: [{ text: 'Calibra con dos soluciones tampón [1].' }] } }] }), onQuery = () => {} } = {}) {
+function routeWith({ user = { id: 'researcher', is_anonymous: false }, notes = [note], key = 'server-secret', fetch: fakeFetch = async () => Response.json({ candidates: [{ content: { parts: [{ text: 'Calibra con dos soluciones tampón [1].' }] } }] }), onQuery = () => {}, timerScale = 1, onBudget = () => {} } = {}) {
   const cache = new Map()
   const mockClient = {
     auth: { getUser: async () => ({ data: { user }, error: user ? null : { message: 'missing' } }) },
@@ -19,7 +19,7 @@ function routeWith({ user = { id: 'researcher', is_anonymous: false }, notes = [
       assert.equal(table, 'boveda_memoria')
       return { select: columns => {
         assert.equal(columns, 'id,titulo,contenido,etiquetas')
-        return { limit: async count => { onQuery('', count); return { data: notes, error: null } } }
+        return { limit: count => ({ abortSignal: async signal => { await onQuery('', count, signal); return { data: notes, error: null } } }) }
       } }
     },
   }
@@ -29,7 +29,8 @@ function routeWith({ user = { id: 'researcher', is_anonymous: false }, notes = [
     cache.set(file, exports)
     const source = ts.transpileModule(readFileSync(path.join(root, file), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText
     vm.runInNewContext(source, {
-      exports, Request, Response, Buffer, AbortSignal,
+      exports, Request, Response, Buffer, AbortSignal, AbortController,
+      setTimeout: (callback, milliseconds) => { onBudget(milliseconds); return setTimeout(callback, milliseconds * timerScale) }, clearTimeout,
       fetch: (url, options) => url.includes('batchEmbedContents') ? Response.json({ embeddings: JSON.parse(options.body).requests.map(() => ({ values: [1, ...Array(767).fill(0)] })) }) : fakeFetch(url, options),
       process: { env: { NEXT_PUBLIC_SUPABASE_URL: 'https://example.supabase.co', NEXT_PUBLIC_SUPABASE_ANON_KEY: 'anon-test', SUPABASE_SERVICE_ROLE_KEY: 'service-test', GEMINI_API_KEY: key } },
       require: name => {
@@ -121,6 +122,42 @@ describe('bot RAG', () => {
     assert.equal(response.status, 200)
     assert.ok(!(await response.text()).includes('SECRET'))
     const blank = routeWith({ fetch: async () => Response.json({ candidates: [] }) })
-    assert.equal((await blank.POST(question('sensor pH'))).status, 502)
+    const emptyResponse = await blank.POST(question('sensor pH'))
+    assert.equal(emptyResponse.status, 200)
+    assert.equal((await emptyResponse.json()).fallback, true)
+  })
+
+  it('cancela RAG lento dentro del presupuesto y responde con orientación sin iniciar Gemini', async () => {
+    const budgets = []
+    let ragSignal
+    let generationCalls = 0
+    const route = routeWith({
+      timerScale: 0.01, onBudget: milliseconds => budgets.push(milliseconds),
+      onQuery: (_filter, _count, signal) => { ragSignal = signal; return new Promise((_resolve, reject) => signal.addEventListener('abort', () => reject(new Error('cancelado')), { once: true })) },
+      fetch: () => { generationCalls += 1; return Response.json({ candidates: [] }) },
+    })
+    const response = await route.POST(question('cultivo de microalgas'))
+    assert.equal(response.status, 200)
+    assert.equal((await response.json()).fallback, true)
+    assert.ok(budgets[0] > 0 && budgets[0] <= 650)
+    assert.equal(ragSignal.aborted, true)
+    assert.equal(generationCalls, 0)
+  })
+
+  it('cancela Gemini lento antes de superar el presupuesto global de 1600 ms', async () => {
+    const budgets = []
+    let generationSignal
+    const route = routeWith({
+      timerScale: 0.01, onBudget: milliseconds => budgets.push(milliseconds),
+      fetch: (_url, options) => { generationSignal = options.signal; return new Promise((_resolve, reject) => options.signal.addEventListener('abort', () => reject(new Error('cancelado')), { once: true })) },
+    })
+    const response = await route.POST(question('sensor pH'))
+    const data = await response.json()
+    assert.equal(response.status, 200)
+    assert.equal(data.fallback, true)
+    assert.equal(data.sources[0].titulo, note.titulo)
+    assert.equal(generationSignal.aborted, true)
+    assert.equal(budgets.length, 2)
+    assert.ok(budgets[1] > 0 && budgets[1] <= 1600)
   })
 })

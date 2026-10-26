@@ -1,5 +1,6 @@
 import { apiFailure, authenticated, databaseFailure, generateIngestToken, json, readJson, ApiError, serverSupabase } from '@/lib/api-server'
 import { parseNode } from '@/lib/telemetry-validation'
+import { DELETE as deleteById } from './[id]/route'
 
 export const runtime = 'nodejs'
 const NODE_COLUMNS = 'id,user_id,name,country,city,lat,lng,created_at' as const
@@ -31,5 +32,14 @@ export async function POST(request: Request) {
     if (error) databaseFailure(error)
     if (!node) throw new ApiError(503, 'No se recibió la confirmación del nodo registrado.')
     return json({ id: node.id, user_id: user.id, token, node }, 201)
+  } catch (error) { return apiFailure(error) }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const body = await readJson(request)
+    const id = body && typeof body === 'object' && !Array.isArray(body) ? (body as Record<string, unknown>).id : null
+    if (typeof id !== 'string') throw new ApiError(400, 'Indica el nodo que deseas eliminar.')
+    return await deleteById(request, { params: Promise.resolve({ id }) })
   } catch (error) { return apiFailure(error) }
 }

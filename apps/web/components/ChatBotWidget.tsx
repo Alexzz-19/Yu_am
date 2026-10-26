@@ -102,7 +102,7 @@ export default function ChatBotWidget() {
     <section id="yuam-chat-panel" role="dialog" aria-label="Asistente de YU’AM" aria-hidden={!open} className={`${open ? 'flex' : 'hidden'} z-[9999] h-[min(34rem,calc(100dvh-7rem))] w-[calc(100vw-2rem)] max-w-sm flex-col overflow-hidden rounded-2xl border border-emerald-200 bg-white shadow-2xl sm:w-96`}>
       <div className="flex items-center gap-3 bg-emerald-950 px-4 py-3 text-white">
         <span className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-emerald-50" aria-label="Yum, asistente de YU’AM"><RobotAvatar mood="idle" size={42} /></span>
-        <div className="min-w-0 flex-1"><h2 className="font-semibold">Bot YU&apos;AM</h2><p className="text-xs text-emerald-100">Tu guía desde la bóveda de memoria</p></div>
+        <div className="min-w-0 flex-1"><h2 className="font-semibold">Yum</h2><p className="text-xs text-emerald-100">Guía de YU&apos;AM &amp; Fotobiorreactores</p></div>
         <button type="button" onClick={() => setOpen(false)} aria-label="Cerrar chat" className="rounded-lg p-2 text-lg leading-none hover:bg-emerald-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">×</button>
       </div>
       {loading ? <p role="status" className="p-5 text-sm text-slate-600">Comprobando sesión…</p> : user ? <ChatSession key={user.id} open={open} onMoodChange={setMood} /> : <div className="flex flex-1 flex-col items-center justify-center gap-4 px-6 text-center">

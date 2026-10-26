@@ -1,4 +1,5 @@
-import { ApiError, apiFailure, authenticated, databaseFailure, generateIngestToken, json, serverSupabase } from '@/lib/api-server'
+import { ApiError, apiFailure, authenticated, databaseFailure, generateIngestToken, json, readJson, serverSupabase } from '@/lib/api-server'
+import { parseNode } from '@/lib/telemetry-validation'
 
 export const runtime = 'nodejs'
 type Context = { params: Promise<{ id: string }> }
@@ -12,6 +13,21 @@ export async function PATCH(request: Request, context: Context) {
   try {
     const { user } = await authenticated(request)
     const id = await nodeId(context)
+    const body = await readJson(request)
+    if (!body || typeof body !== 'object' || Array.isArray(body)) throw new ApiError(400, 'Envía una operación válida para el nodo.')
+    const action = (body as Record<string, unknown>).action
+    if (action === 'relocate') {
+      let input
+      try { input = parseNode(body) } catch (error) { throw new ApiError(400, error instanceof Error ? error.message : 'Ubicación inválida.') }
+      if (!input.country || !input.city) throw new ApiError(400, 'Selecciona país y ciudad o departamento.')
+      const { data: node, error } = await serverSupabase(true).from('nodes')
+        .update({ name: input.nombre, country: input.country, city: input.city, lat: input.lat, lng: input.lng })
+        .eq('id', id).eq('user_id', user.id).select('id,user_id,name,country,city,lat,lng,created_at').maybeSingle()
+      if (error) databaseFailure(error)
+      if (!node) throw new ApiError(404, 'Nodo no encontrado.')
+      return json({ node })
+    }
+    if (action !== undefined && action !== 'rotate') throw new ApiError(400, 'Operación de nodo desconocida.')
     const { token } = generateIngestToken()
     const { data, error } = await serverSupabase(true).from('nodes').update({ token }).eq('id', id).eq('user_id', user.id).select('id').maybeSingle()
     if (error) databaseFailure(error)

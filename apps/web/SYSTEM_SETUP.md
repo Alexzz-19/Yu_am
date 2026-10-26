@@ -22,4 +22,16 @@ Para bóvedas mayores, migrar a un índice vectorial persistente y recuperar los
 
 Sin coincidencias, Yum ofrece orientación contextual sobre cultivos, fotobiorreactores y sensores, sin atribuirla a fuentes inexistentes.
 
+## Gestión y tiempo de respuesta
+
+`PATCH /api/nodes/:id` con `action: "relocate"` guarda nombre, país, ciudad y coordenadas sin rotar el token.
+`DELETE /api/nodes` recibe `{ "id": "uuid" }`; tanto edición como eliminación filtran por `user_id` de la sesión validada.
+La creación y rotación muestran el token en un diálogo nativo. Cerrar con el botón o Escape elimina el secreto del estado del componente.
+
+La recuperación RAG tiene un límite duro de 4 segundos y propaga la cancelación a Supabase y a los embeddings.
+La ruta de chat usa un presupuesto global objetivo de 1600 ms y concede hasta 650 ms a la búsqueda;
+si no alcanza, devuelve orientación contextual sin esperar a Gemini. La generación recibe solo el tiempo restante.
+Los embeddings se calculan en paralelo y se reutilizan durante diez minutos. La latencia de autenticación,
+el arranque del servidor y el tránsito de red pueden añadir tiempo; no existe una garantía extremo a extremo de dos segundos.
+
 Soporte oficial: `Yuam_support@protonmail.com`.
