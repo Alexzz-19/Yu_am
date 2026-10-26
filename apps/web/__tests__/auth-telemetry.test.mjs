@@ -48,18 +48,17 @@ describe('ingesta autenticada', () => {
     }
   })
 
-  it('envía hash y métricas a la transacción, sin permitir elegir otro nodo', async () => {
+  it('autoriza la clave del nodo y guarda sus métricas en la transacción de hardware', async () => {
     let args
     const route = modules({ rpc: async (name, input) => {
-      assert.equal(name, 'yuam_ingest_telemetry'); args = input
+      assert.equal(name, 'yuam_ingest_hardware'); args = input
       return { data: { status: 'accepted', nodo_id: 'node-1', created_at: '2026-10-25T00:00:00Z' }, error: null }
     } })('app/api/telemetry/route.ts')
     const response = await route.POST(request({ co2_ppm: 520, ph: 7.1, temperatura: 26.5 }))
     assert.equal(response.status, 201)
     assert.equal(response.headers.get('Cache-Control'), 'no-store')
     assert.equal((await response.json()).estado, 'Activo')
-    assert.match(args.p_token_hash, /^[a-f0-9]{64}$/)
-    assert.ok(!JSON.stringify(args).includes(token))
+    assert.equal(args.p_token, token)
     assert.equal(args.p_ph, 7.1)
     assert.equal((await route.POST(request({ nodo_id: 'other', co2_ppm: 520 }))).status, 400)
   })
@@ -83,7 +82,7 @@ describe('ingesta autenticada', () => {
 
   it('rechaza cuerpo vacío, tipos incorrectos, límites, JSON inválido y cuerpos grandes', async () => {
     const route = modules({ rpc: () => assert.fail('No debe consultar DB') })('app/api/telemetry/route.ts')
-    for (const body of [{}, [], null, { ph: 15 }, { ph: '7' }, { temperatura: -56 }, { co2_ppm: -1 }, { co2_ppm: true }]) {
+    for (const body of [{}, [], null, { ph: 15 }, { ph: '7' }, { temperatura: -56 }, { co2_ppm: -1 }, { co2_ppm: true }, { lux: -1 }, { pm25: -1 }]) {
       assert.equal((await route.POST(request(body))).status, 400)
     }
     const invalid = new Request('https://yuam.test/api/telemetry', { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: '{' })
@@ -112,7 +111,7 @@ describe('gestión de nodos', () => {
         return { insert: input => { calls.push(input); return { select: columns => { assert.ok(!columns.split(',').includes('token')); return { single: async () => ({ data: { id: 'node-1', user_id: input.user_id, name: input.name }, error: null }) } } } } }
       },
     })('app/api/nodes/route.ts')
-    const body = { name: ' Cultivo ', country: 'Guatemala', city: 'Guatemala', lat: 14.5968, lng: -90.5103 }
+    const body = { name: ' Cultivo ', country: 'Guatemala', city: 'Guatemala', lat: 14.5968, lng: -90.5103, board_type: 'ESP32', algae_type: 'Spirulina', sensors: ['ph', 'temperature'] }
     const first = await route.POST(request(body)); const one = await first.json()
     const second = await route.POST(request(body)); const two = await second.json()
     assert.equal(first.status, 201); assert.equal(second.status, 201)
@@ -122,6 +121,9 @@ describe('gestión de nodos', () => {
     assert.equal(calls[0].lat, 14.6); assert.equal(calls[0].lng, -90.51)
     assert.equal(calls[0].name, 'Cultivo')
     assert.equal(calls[0].token, one.token)
+    assert.equal(calls[0].board_type, 'ESP32')
+    assert.equal(calls[0].algae_type, 'Spirulina')
+    assert.deepEqual([...calls[0].sensors], ['ph', 'temperature'])
   })
 
   it('no confirma un alta si Supabase rechaza la inserción', async () => {
@@ -130,7 +132,7 @@ describe('gestión de nodos', () => {
       auth: { getUser: async () => ({ data: { user: { id: 'owner-id', is_anonymous: false } }, error: null }) },
       from: () => ({ insert: payload => { input = payload; return { select: () => ({ single: async () => ({ data: null, error: { code: '42501' } }) }) } } }),
     })('app/api/nodes/route.ts')
-    const response = await route.POST(request({ name: 'Cultivo comunitario', country: 'Guatemala', city: 'Petén', lat: 16.9226, lng: -89.892 }))
+    const response = await route.POST(request({ name: 'Cultivo comunitario', country: 'Guatemala', city: 'Petén', lat: 16.9226, lng: -89.892, board_type: 'Arduino', algae_type: 'Chlorella vulgaris', sensors: ['lux'] }))
     assert.equal(response.status, 403)
     const result = await response.json()
     assert.equal(input.user_id, 'owner-id')

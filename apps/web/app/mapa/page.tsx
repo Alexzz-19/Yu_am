@@ -12,8 +12,8 @@ export default function MapaPage() {
           Una red de nodos para un aire más limpio.
         </h1>
         <p className="mt-3 max-w-2xl text-slate-600">
-          Haz clic en cualquier punto del mapa o usa «Mi Ubicación» para consultar la calidad del aire en
-          tiempo real con Open-Meteo.
+          Los nodos comunitarios se actualizan cada 30 minutos y muestran su última lectura y promedios semanales y mensuales.
+          Haz clic en cualquier punto o usa «Mi Ubicación» para una consulta puntual de calidad del aire con Open-Meteo.
         </p>
         <MapClient />
       </main>

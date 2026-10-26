@@ -1,19 +1,19 @@
 import { apiFailure, authenticated, databaseFailure, generateIngestToken, json, readJson, ApiError, serverSupabase } from '@/lib/api-server'
 import { parseNode } from '@/lib/telemetry-validation'
 import { DELETE as deleteById } from './[id]/route'
+import { NODE_FIELDS, parseHardware } from '@/lib/hardware'
 
 export const runtime = 'nodejs'
-const NODE_COLUMNS = 'id,user_id,name,country,city,lat,lng,created_at' as const
 
 export async function GET(request: Request) {
   try {
     if (new URL(request.url).searchParams.get('scope') === 'community') {
-      const { data, error } = await serverSupabase(true).from('nodes').select('id,name,country,city,lat,lng').order('created_at', { ascending: false }).limit(1000)
+      const { data, error } = await serverSupabase(true).rpc('yuam_public_node_stats')
       if (error) databaseFailure(error)
-      return json({ nodes: (data ?? []).map(node => ({ id: node.id, nombre_nodo: node.name, ubicacion_ofuscada: { zona: `${node.city}, ${node.country}`, lat: Math.round(node.lat * 100) / 100, lng: Math.round(node.lng * 100) / 100 }, estado: 'inactivo', ultimo_envio: null })) })
+      return json({ nodes: data ?? [] })
     }
     const { user } = await authenticated(request)
-    const { data, error } = await serverSupabase(true).from('nodes').select(NODE_COLUMNS).eq('user_id', user.id).order('created_at', { ascending: false })
+    const { data, error } = await serverSupabase(true).from('nodes').select(NODE_FIELDS).eq('user_id', user.id).order('created_at', { ascending: false })
     if (error) databaseFailure(error)
     return json({ nodes: data })
   } catch (error) { return apiFailure(error) }
@@ -26,9 +26,11 @@ export async function POST(request: Request) {
     let input
     try { input = parseNode(body) } catch (error) { throw new ApiError(400, (error as Error).message) }
     if (!input.country || !input.city) throw new ApiError(400, 'Selecciona país y ciudad o departamento.')
+    let hardware
+    try { hardware = parseHardware(body as Record<string, unknown>) } catch (error) { throw new ApiError(400, error instanceof Error ? error.message : 'Hardware inválido.') }
     const { token } = generateIngestToken()
     // El propietario se toma exclusivamente del JWT verificado por Supabase.
-    const { data: node, error } = await serverSupabase(true).from('nodes').insert({ user_id: user.id, name: input.nombre, country: input.country, city: input.city, lat: input.lat, lng: input.lng, token }).select(NODE_COLUMNS).single()
+    const { data: node, error } = await serverSupabase(true).from('nodes').insert({ user_id: user.id, name: input.nombre, country: input.country, city: input.city, lat: input.lat, lng: input.lng, token, ...hardware }).select(NODE_FIELDS).single()
     if (error) databaseFailure(error)
     if (!node) throw new ApiError(503, 'No se recibió la confirmación del nodo registrado.')
     return json({ id: node.id, user_id: user.id, token, node }, 201)

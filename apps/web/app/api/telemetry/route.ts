@@ -1,4 +1,4 @@
-import { ApiError, apiFailure, hashToken, json, readJson, serverSupabase } from '@/lib/api-server'
+import { ApiError, apiFailure, json, readJson, serverSupabase } from '@/lib/api-server'
 import { bearerToken, parseTelemetry } from '@/lib/telemetry-validation'
 
 export const runtime = 'nodejs'
@@ -10,8 +10,8 @@ export async function POST(request: Request) {
     const body = await readJson(request)
     let input
     try { input = parseTelemetry(body) } catch (error) { throw new ApiError(400, (error as Error).message) }
-    const { data, error } = await serverSupabase(true).rpc('yuam_ingest_telemetry', {
-      p_token_hash: hashToken(token), p_co2: input.co2_ppm, p_ph: input.ph, p_temperature: input.temperatura,
+    const { data, error } = await serverSupabase(true).rpc('yuam_ingest_hardware', {
+      p_token: token, p_ppm: input.co2_ppm, p_ph: input.ph, p_temperature: input.temperatura, p_lux: input.lux, p_pm25: input.pm25,
     })
     if (error) throw error
     if (!data || typeof data !== 'object' || Array.isArray(data)) throw new Error('Invalid RPC response')

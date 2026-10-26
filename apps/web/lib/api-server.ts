@@ -42,7 +42,7 @@ export async function authenticated(request: Request) {
   return { client, user: data.user }
 }
 
-export async function readJson(request: Request): Promise<unknown> {
+export async function readJson(request: Request, maxBytes = 4096): Promise<unknown> {
   if (!request.headers.get('content-type')?.toLowerCase().includes('application/json')) {
     throw new ApiError(415, 'Usa Content-Type: application/json.')
   }
@@ -55,7 +55,7 @@ export async function readJson(request: Request): Promise<unknown> {
       const { value, done } = await reader.read()
       if (done) break
       size += value.byteLength
-      if (size > 4096) { await reader.cancel(); throw new ApiError(413, 'El cuerpo no puede superar 4 KiB.') }
+      if (size > maxBytes) { await reader.cancel(); throw new ApiError(413, `El cuerpo no puede superar ${Math.round(maxBytes / 1024)} KiB.`) }
       parts.push(value)
     }
     return JSON.parse(Buffer.concat(parts).toString('utf8')) as unknown

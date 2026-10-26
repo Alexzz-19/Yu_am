@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react'
 import { MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from 'react-leaflet'
 import L from 'leaflet'
 import type { PublicNode } from '@/lib/database.types'
+import NodeTelemetrySummary from './NodeTelemetrySummary'
 
 type CalidadAire = {
   pm10: number | null
@@ -225,7 +226,7 @@ export default function GlobalMap() {
       }
     }
     void refreshNodes()
-    const timer = setInterval(refreshNodes, 30000)
+    const timer = setInterval(refreshNodes, 30 * 60 * 1000)
     return () => { current = false; clearInterval(timer); controller.abort() }
   }, [])
 
@@ -304,7 +305,7 @@ export default function GlobalMap() {
 
           {nodes.filter(node => Number.isFinite(node.ubicacion_ofuscada.lat) && Number.isFinite(node.ubicacion_ofuscada.lng)).map(node => (
             <Marker key={node.id} position={[node.ubicacion_ofuscada.lat!, node.ubicacion_ofuscada.lng!]} icon={iconoComunitario}>
-              <Popup><div className="min-w-[200px]"><p className="font-semibold">{node.nombre_nodo}</p><p>{node.ubicacion_ofuscada.zona}</p><p className="mt-2">{node.estado === 'activo' ? '🟢 Activo' : 'Sin lecturas recientes'}</p><p className="mt-1 text-xs">{node.ultimo_envio ? `Última lectura: ${new Date(node.ultimo_envio).toLocaleString()}` : 'Esperando la primera lectura'}</p><p className="mt-1 text-xs">Ubicación aproximada. Se actualiza cada 30 segundos.</p></div></Popup>
+              <Popup maxWidth={420}><NodeTelemetrySummary node={node} /></Popup>
             </Marker>
           ))}
 

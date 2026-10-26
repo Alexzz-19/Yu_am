@@ -1,4 +1,4 @@
-export type TelemetryInput = { co2_ppm: number | null; ph: number | null; temperatura: number | null }
+export type TelemetryInput = { co2_ppm: number | null; ph: number | null; temperatura: number | null; lux: number | null; pm25: number | null }
 export type NodeInput = { nombre: string; zona: string; country: string | null; city: string | null; lat: number; lng: number }
 
 function object(value: unknown): Record<string, unknown> {
@@ -15,13 +15,15 @@ function numeric(value: unknown, min: number, max: number, name: string): number
 
 export function parseTelemetry(value: unknown): TelemetryInput {
   const data = object(value)
-  if (Object.keys(data).some(key => !['co2_ppm', 'ph', 'temperatura'].includes(key))) {
-    throw new Error('Campos permitidos: co2_ppm, ph y temperatura.')
+  if (Object.keys(data).some(key => !['co2_ppm', 'ph', 'temperatura', 'lux', 'pm25'].includes(key))) {
+    throw new Error('Campos permitidos: co2_ppm, ph, temperatura, lux y pm25.')
   }
   const result = {
     co2_ppm: data.co2_ppm == null ? null : numeric(data.co2_ppm, 0, 1000000, 'CO₂'),
     ph: data.ph == null ? null : numeric(data.ph, 0, 14, 'pH'),
     temperatura: data.temperatura == null ? null : numeric(data.temperatura, -55, 125, 'Temperatura'),
+    lux: data.lux == null ? null : numeric(data.lux, 0, 1000000, 'Luxes'),
+    pm25: data.pm25 == null ? null : numeric(data.pm25, 0, 1000000, 'PM2.5'),
   }
   if (Object.values(result).every(item => item === null)) throw new Error('Envía al menos una medición.')
   return result

@@ -6,7 +6,11 @@ import Image from 'next/image'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabaseClient'
 import Sparkline from '@/components/Sparkline'
-import type { NodoIoT, TelemetriaMq135, Reactor, Reading, UbicacionOfuscada } from '@/lib/database.types'
+import type { NodoIoT, TelemetriaMq135, Reactor, Reading, HardwareReading, UbicacionOfuscada } from '@/lib/database.types'
+
+function dashboardReading(row: HardwareReading): Reading {
+  return { id: row.id, reactor_id: row.reactor_id ?? '', temperatura: row.water_temperature, ph: row.ph_value, oxigeno_disuelto: null, created_at: row.created_at, updated_at: row.created_at }
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Auth (Supabase): el acceso se centraliza en /login.
@@ -233,7 +237,7 @@ export default function DashboardPage() {
         const { data, error } = await supabase.from('reactors').select('*').limit(10)
         if (error) throw error
 
-        const reactoresData = (data ?? []) as Reactor[]
+        const reactoresData: Reactor[] = (data ?? []).map(row => ({ id: row.id, usuario_id: row.user_id, nombre: row.name, tipo_cultivo: row.algae_type, estado: 'inactivo', created_at: row.created_at, updated_at: row.created_at }))
         if (reactoresData.length > 0) {
           setReactores(reactoresData)
           setSelectedReactor(reactoresData[0].id)
@@ -273,7 +277,7 @@ export default function DashboardPage() {
           .limit(20)
 
         if (error) throw error
-        setReadingsList((data ?? []) as Reading[])
+        setReadingsList((data ?? []).map(dashboardReading))
       } catch (err: unknown) {
         console.error('Error fetching readings:', getErrorMessage(err))
         setReadingsList([])
@@ -293,7 +297,7 @@ export default function DashboardPage() {
           filter: `reactor_id=eq.${selectedReactor}`,
         },
         (payload) => {
-          const nuevaLectura = payload.new as Reading
+          const nuevaLectura = dashboardReading(payload.new as HardwareReading)
           setReadingsList((prev) => [nuevaLectura, ...prev].slice(0, 50))
         },
       )

@@ -1,14 +1,15 @@
 'use client'
 
-import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useAuth } from '@/lib/use-auth'
-import { nodeRequest } from '@/lib/node-api'
+import { ApiRequestError, nodeRequest } from '@/lib/node-api'
+import { isChatQuota, type ChatQuota, type ChatReply, type ChatSource } from '@/lib/chat-types'
+import Dialog from './ui/Dialog'
 
-type Source = { id: string; titulo: string; etiquetas: string[] }
-type ChatReply = { answer: string; sources: Source[]; fallback?: boolean }
-type Message = { id: string; role: 'user' | 'assistant'; text: string; sources?: Source[]; error?: boolean; fallback?: boolean }
+type Message = { id: string; role: 'user' | 'assistant'; text: string; sources?: ChatSource[]; error?: boolean }
+const WELCOME = '¡Hola! Soy Yum, tu guía de YU’AM. Cuéntame qué necesitas resolver sobre tu cultivo, fotobiorreactor o sensores. Tienes cinco preguntas al día.'
 
 type Mood = 'idle' | 'working' | 'happy' | 'sad' | 'pointing'
 
@@ -24,20 +25,48 @@ function RobotAvatar({ mood, size = 40 }: { mood: Mood; size?: number }) {
 }
 
 function ChatSession({ open, onMoodChange }: { open: boolean; onMoodChange: (mood: Mood) => void }) {
-  const [messages, setMessages] = useState<Message[]>([])
+  const [messages, setMessages] = useState<Message[]>([{ id: 'welcome', role: 'assistant', text: WELCOME }])
   const [draft, setDraft] = useState('')
   const [busy, setBusy] = useState(false)
+  const [quota, setQuota] = useState<ChatQuota | null>(null)
+  const [quotaLoading, setQuotaLoading] = useState(true)
+  const [quotaError, setQuotaError] = useState('')
+  const [limitOpen, setLimitOpen] = useState(false)
+  const latestQuota = useRef<ChatQuota | null>(null)
   const pending = useRef<AbortController | null>(null)
   const end = useRef<HTMLDivElement>(null)
   const input = useRef<HTMLTextAreaElement>(null)
   useEffect(() => { end.current?.scrollIntoView({ block: 'end' }) }, [messages, busy, open])
-  useEffect(() => { if (open) input.current?.focus() }, [open])
+  useEffect(() => { if (open && !quotaLoading && quota && quota.remaining > 0) input.current?.focus() }, [open, quotaLoading, quota])
   useEffect(() => () => pending.current?.abort(), [])
+  const refreshQuota = useCallback(async () => {
+    const result = await nodeRequest<{ quota: ChatQuota }>('/api/chat')
+    if (!isChatQuota(result.quota)) throw new Error('No se pudo comprobar la cuota de Yum.')
+    return result.quota
+  }, [])
+  const applyQuota = useCallback((value: ChatQuota) => {
+    const previous = latestQuota.current
+    const current = previous && (Date.parse(previous.resetsAt) > Date.parse(value.resetsAt) || (previous.resetsAt === value.resetsAt && previous.used > value.used)) ? previous : value
+    latestQuota.current = current
+    setQuota(current)
+    setQuotaError('')
+    setLimitOpen(current.remaining === 0)
+  }, [])
+  useEffect(() => {
+    if (!open) return
+    void refreshQuota().then(applyQuota).catch(error => setQuotaError(error instanceof Error ? error.message : 'No se pudo comprobar la cuota.')).finally(() => setQuotaLoading(false))
+  }, [open, refreshQuota, applyQuota])
+  useEffect(() => {
+    if (!quota) return
+    const timer = window.setTimeout(() => { void refreshQuota().then(applyQuota).catch(() => setQuotaError('Vuelve a abrir el chat para comprobar tu cuota.')) }, Math.max(1000, Date.parse(quota.resetsAt) - Date.now() + 1000))
+    return () => window.clearTimeout(timer)
+  }, [quota, refreshQuota, applyQuota])
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const prompt = draft.trim()
-    if (!prompt || busy) return
+    if (!prompt || busy || quotaLoading || quotaError || !quota) return
+    if (quota.remaining === 0) { setLimitOpen(true); return }
     setBusy(true)
     onMoodChange('working')
     setDraft('')
@@ -45,16 +74,22 @@ function ChatSession({ open, onMoodChange }: { open: boolean; onMoodChange: (moo
     const controller = new AbortController()
     pending.current = controller
     try {
-      const reply = await nodeRequest<ChatReply>('/api/chat', 'POST', { prompt }, controller.signal)
+      const history = messages.filter(message => message.id !== 'welcome' && !message.error).slice(-4).map(({ role, text }) => ({ role, text: text.slice(0, 600) }))
+      const reply = await nodeRequest<ChatReply>('/api/chat', 'POST', { prompt, history }, controller.signal)
       if (!controller.signal.aborted) {
         if (typeof reply.answer !== 'string' || !Array.isArray(reply.sources)) throw new Error('Respuesta incompleta del asistente.')
-        const noData = reply.sources.length === 0 && !reply.fallback
-        onMoodChange(noData ? 'sad' : 'happy')
-        setMessages(previous => [...previous, { id: crypto.randomUUID(), role: 'assistant', text: reply.answer, sources: reply.sources, error: noData, fallback: reply.fallback }])
+        if (!isChatQuota(reply.quota)) throw new Error('No se pudo verificar la cuota de la respuesta.')
+        applyQuota(reply.quota)
+        onMoodChange('happy')
+        setMessages(previous => [...previous, { id: crypto.randomUUID(), role: 'assistant', text: reply.answer, sources: reply.sources }])
       }
     } catch (error) {
       if (!controller.signal.aborted) {
         onMoodChange('sad')
+        if (error instanceof ApiRequestError && isChatQuota(error.details.quota)) {
+          applyQuota(error.details.quota)
+        }
+        if (error instanceof ApiRequestError && error.status === 429) return
         const detail = error instanceof Error ? error.message : 'No se pudo consultar el asistente.'
         setMessages(previous => [...previous, { id: crypto.randomUUID(), role: 'assistant', text: detail, error: true }])
       }
@@ -66,14 +101,10 @@ function ChatSession({ open, onMoodChange }: { open: boolean; onMoodChange: (moo
 
   return <div className="flex min-h-0 flex-1 flex-col">
     <div aria-live="polite" aria-relevant="additions" className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-5">
-      {messages.length === 0 && <div className="rounded-xl bg-emerald-50 px-4 py-3 text-sm leading-relaxed text-emerald-950">
-        Pregúntame sobre cultivos, sensores y protocolos guardados en la bóveda de YU&apos;AM. Citaré las notas usadas en la respuesta.
-      </div>}
       {messages.map(message => <div key={message.id} className={`flex gap-2 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
         {message.role === 'assistant' && <RobotAvatar mood={message.error ? 'sad' : 'happy'} size={28} />}
         <div className={`max-w-[85%] rounded-2xl px-3 py-2 text-sm leading-relaxed ${message.role === 'user' ? 'rounded-br-sm bg-emerald-700 text-white' : 'rounded-bl-sm bg-slate-100 text-slate-900'}`}>
           <p className="whitespace-pre-wrap break-words">{message.text}</p>
-          {message.fallback && <p className="mt-2 text-xs font-medium text-emerald-800">Orientación de Yum</p>}
           {message.sources && message.sources.length > 0 && <div className="mt-3 border-t border-slate-300 pt-2 text-xs text-slate-600">
             <p className="font-semibold">Notas consultadas</p>
             <ol className="mt-1 list-decimal space-y-0.5 pl-4">{message.sources.map(source => <li key={source.id}>{source.titulo}</li>)}</ol>
@@ -86,11 +117,13 @@ function ChatSession({ open, onMoodChange }: { open: boolean; onMoodChange: (moo
     <form onSubmit={submit} className="border-t border-slate-200 bg-white p-3">
       <label htmlFor="yuam-chat-prompt" className="sr-only">Escribe una pregunta para el asistente</label>
       <div className="flex items-end gap-2">
-        <textarea id="yuam-chat-prompt" ref={input} value={draft} onChange={event => setDraft(event.target.value)} onKeyDown={event => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); event.currentTarget.form?.requestSubmit() } }} rows={2} maxLength={1000} placeholder="Pregunta sobre YU’AM…" disabled={busy} className="max-h-28 min-h-12 flex-1 resize-none rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-900 outline-none placeholder:text-slate-400 focus-visible:border-emerald-600 focus-visible:ring-2 focus-visible:ring-emerald-100 disabled:bg-slate-50 disabled:text-slate-900" />
-        <button type="submit" disabled={busy || !draft.trim()} className="rounded-xl bg-emerald-700 px-4 py-3 text-sm font-medium text-white hover:bg-emerald-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 disabled:cursor-not-allowed disabled:opacity-50">Enviar</button>
+        <textarea id="yuam-chat-prompt" ref={input} value={draft} onChange={event => setDraft(event.target.value)} onKeyDown={event => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); event.currentTarget.form?.requestSubmit() } }} rows={2} maxLength={1000} placeholder={quota?.remaining === 0 ? 'Límite diario alcanzado' : 'Pregunta sobre YU’AM…'} disabled={busy || quotaLoading || !!quotaError || !quota || quota.remaining === 0} className="max-h-28 min-h-12 flex-1 resize-none rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-900 outline-none placeholder:text-slate-400 focus-visible:border-emerald-600 focus-visible:ring-2 focus-visible:ring-emerald-100 disabled:bg-slate-50 disabled:text-slate-900" />
+        <button type="submit" disabled={busy || quotaLoading || !!quotaError || !quota || quota.remaining === 0 || !draft.trim()} className="rounded-xl bg-emerald-700 px-4 py-3 text-sm font-medium text-white hover:bg-emerald-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 disabled:cursor-not-allowed disabled:opacity-50">Enviar</button>
       </div>
-      <p className="mt-2 text-xs text-slate-500">Respuestas basadas en hasta cinco notas. Enter envía; Shift + Enter añade una línea.</p>
+      <p className="mt-2 text-xs text-slate-500">{quota ? `${quota.remaining} de 5 preguntas disponibles hoy.` : 'Comprobando preguntas disponibles…'} Enter envía; Shift + Enter añade una línea.</p>
+      {quotaError && <p role="alert" className="mt-2 text-xs text-rose-700">{quotaError} <button type="button" onClick={() => { void refreshQuota().then(applyQuota).catch(() => setQuotaError('No se pudo comprobar la cuota.')) }} className="font-semibold underline">Reintentar</button></p>}
     </form>
+    {open && limitOpen && <Dialog title="Límite diario alcanzado" description="Ya utilizaste tus cinco preguntas de hoy. Tu cuota se renueva a diario y se mantiene aunque cierres sesión o abras otra ventana." onClose={() => setLimitOpen(false)}><p className="text-sm text-slate-300">{quota && `Podrás volver a preguntar el ${new Date(quota.resetsAt).toLocaleString('es-GT')}.`}</p><button type="button" onClick={() => setLimitOpen(false)} className="mt-5 rounded-xl bg-emerald-400 px-4 py-2.5 text-sm font-semibold text-emerald-950 hover:bg-emerald-300">Entendido</button></Dialog>}
   </div>
 }
 
