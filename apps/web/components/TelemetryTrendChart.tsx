@@ -1,7 +1,7 @@
 'use client'
 
 import { useReducedMotion } from 'framer-motion'
-import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import { Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 
 export type TelemetryChartPoint = {
   created_at: string
@@ -20,9 +20,13 @@ const config: Record<TelemetryChartKey, { label: string; unit: string; color: st
   light_lux: { label: 'Luz', unit: 'lux', color: '#a16207', digits: 0 },
 }
 
-function shortTime(value: string) {
+function exactDateTime(value: string) {
   const date = new Date(value)
-  return Number.isNaN(date.getTime()) ? '' : date.toLocaleTimeString('es-GT', { hour: '2-digit', minute: '2-digit' })
+  if (Number.isNaN(date.getTime())) return ''
+  const datePart = date.toLocaleDateString('es-GT', { day: '2-digit', month: 'short' })
+  const capitalizedDate = datePart.replace(/[a-záéíóúñ]+/i, month => month.charAt(0).toLocaleUpperCase('es-GT') + month.slice(1))
+  const timePart = date.toLocaleTimeString('es-GT', { hour: '2-digit', minute: '2-digit', hour12: true })
+  return capitalizedDate + ', ' + timePart
 }
 
 export default function TelemetryTrendChart({ title, metric, readings }: { title?: string; metric: TelemetryChartKey; readings: TelemetryChartPoint[] }) {
@@ -34,20 +38,39 @@ export default function TelemetryTrendChart({ title, metric, readings }: { title
       <h3 className="font-semibold text-slate-900">{title ?? 'Tendencia de ' + chart.label}</h3>
       <span className="text-xs text-slate-600">{data.length} {data.length === 1 ? 'lectura' : 'lecturas'} · {chart.unit}</span>
     </div>
-    {data.length ? <div role="img" aria-label={chart.label + ': gráfico de ' + data.length + ' lecturas registradas'}>
-      <ResponsiveContainer width="100%" height={210}>
-        <LineChart data={data} margin={{ top: 8, right: 10, bottom: 2, left: -14 }}>
-          <CartesianGrid stroke="#e2e8f0" strokeDasharray="3 5" vertical={false} />
-          <XAxis dataKey="created_at" tickFormatter={shortTime} tick={{ fill: '#475569', fontSize: 11 }} tickLine={false} axisLine={{ stroke: '#cbd5e1' }} minTickGap={28} />
-          <YAxis width={58} tick={{ fill: '#475569', fontSize: 11 }} tickLine={false} axisLine={false} />
-          <Tooltip
-            labelFormatter={value => new Date(String(value)).toLocaleString('es-GT')}
-            formatter={value => [typeof value === 'number' ? value.toFixed(chart.digits) + ' ' + chart.unit : 'Sin datos', chart.label]}
-            contentStyle={{ borderRadius: 12, borderColor: '#cbd5e1', color: '#0f172a', fontSize: 12 }}
-          />
-          <Line type="monotone" dataKey={metric} name={chart.label} stroke={chart.color} strokeWidth={2.5} dot={false} activeDot={{ r: 4, strokeWidth: 0 }} isAnimationActive={!reducedMotion} animationDuration={550} connectNulls={false} />
-        </LineChart>
-      </ResponsiveContainer>
+    {data.length ? <div className={metric === 'ppm_value' ? 'grid gap-4 xl:grid-cols-2' : ''}>
+      <div role="img" aria-label={chart.label + ': gráfico de líneas con ' + data.length + ' lecturas registradas'}>
+        <p className="mb-1 text-xs font-medium text-slate-600">Tendencia (líneas)</p>
+        <ResponsiveContainer width="100%" height={250}>
+          <LineChart data={data} margin={{ top: 8, right: 10, bottom: 32, left: -14 }}>
+            <CartesianGrid stroke="#e2e8f0" strokeDasharray="3 5" vertical={false} />
+            <XAxis dataKey="created_at" tickFormatter={exactDateTime} tick={{ fill: '#475569', fontSize: 10 }} tickLine={false} axisLine={{ stroke: '#cbd5e1' }} minTickGap={20} interval="preserveStartEnd" angle={-32} textAnchor="end" height={54} />
+            <YAxis width={58} tick={{ fill: '#475569', fontSize: 11 }} tickLine={false} axisLine={false} />
+            <Tooltip
+              labelFormatter={value => exactDateTime(String(value))}
+              formatter={value => [typeof value === 'number' ? value.toFixed(chart.digits) + ' ' + chart.unit : 'Sin datos', chart.label]}
+              contentStyle={{ borderRadius: 12, borderColor: '#cbd5e1', color: '#0f172a', fontSize: 12 }}
+            />
+            <Line type="monotone" dataKey={metric} name={chart.label} stroke={chart.color} strokeWidth={2.5} dot={false} activeDot={{ r: 4, strokeWidth: 0 }} isAnimationActive={!reducedMotion} animationDuration={550} connectNulls={false} />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+      {metric === 'ppm_value' && <div role="img" aria-label="CO₂ estimado: gráfico de barras para comparar las concentraciones registradas">
+        <p className="mb-1 text-xs font-medium text-slate-600">Comparación de picos (barras)</p>
+        <ResponsiveContainer width="100%" height={250}>
+          <BarChart data={data} margin={{ top: 8, right: 10, bottom: 32, left: -14 }}>
+            <CartesianGrid stroke="#e2e8f0" strokeDasharray="3 5" vertical={false} />
+            <XAxis dataKey="created_at" tickFormatter={exactDateTime} tick={{ fill: '#475569', fontSize: 10 }} tickLine={false} axisLine={{ stroke: '#cbd5e1' }} minTickGap={20} interval="preserveStartEnd" angle={-32} textAnchor="end" height={54} />
+            <YAxis width={58} tick={{ fill: '#475569', fontSize: 11 }} tickLine={false} axisLine={false} />
+            <Tooltip
+              labelFormatter={value => exactDateTime(String(value))}
+              formatter={value => [typeof value === 'number' ? value.toFixed(chart.digits) + ' ' + chart.unit : 'Sin datos', chart.label]}
+              contentStyle={{ borderRadius: 12, borderColor: '#cbd5e1', color: '#0f172a', fontSize: 12 }}
+            />
+            <Bar dataKey="ppm_value" name={chart.label} fill="#059669" radius={[4, 4, 0, 0]} isAnimationActive={!reducedMotion} animationDuration={550} />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>}
     </div> : <p className="flex h-[210px] items-center justify-center rounded-xl bg-slate-50 text-sm text-slate-600">Sin lecturas disponibles para esta tendencia.</p>}
     <p className="mt-2 text-xs text-slate-500">Valores de telemetría recibidos, en orden cronológico.</p>
   </section>
