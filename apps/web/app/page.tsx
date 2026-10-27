@@ -4,6 +4,8 @@ import Link from 'next/link'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import PhasesSection from '@/components/PhasesSection'
+import PhotobioreactorHero from '@/components/PhotobioreactorHero'
+import MotionReveal from '@/components/MotionReveal'
 
 type Especificacion = {
   clave: string
@@ -118,27 +120,17 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl border border-[#E2E8F0] bg-slate-100 shadow-md">
-            <Image
-              src="/images/principal.webp"
-              alt="Equipo del proyecto en MILAB junto al prototipo con botellas de cultivo iluminadas y figuras de la mascota"
-              fill
-              priority
-              sizes="(max-width: 768px) 100vw, 50vw"
-              className="object-cover"
-            />
-            <div className="absolute bottom-3 left-3 rounded-lg border border-slate-200 bg-white/90 px-3 py-1.5 text-xs font-medium text-slate-700 backdrop-blur">
-              📍 MILAB - Prototipo YU&apos;AM v2.0
-            </div>
-            <div className="absolute bottom-12 right-3 flex items-end gap-2 rounded-2xl bg-white/95 p-2 shadow-lg sm:bottom-3 sm:right-4">
-              <p className="max-w-28 text-xs font-medium leading-snug text-emerald-950">¡Hola! Soy Yum, tu guía en YU&apos;AM.</p>
-              <Image src="/images/yum/yum-wave.webp?v=20261025-alpha" alt="Yum, el robot asistente de YU'AM, saludando" width={72} height={109} className="h-20 w-auto object-contain" />
+          <div className="relative min-w-0">
+            <PhotobioreactorHero />
+            <div className="absolute -bottom-5 left-1/2 flex w-[min(19rem,calc(100%-1.5rem))] -translate-x-1/2 items-center gap-3 rounded-2xl border border-emerald-100 bg-white/95 p-2.5 shadow-xl backdrop-blur sm:bottom-5 sm:left-auto sm:right-5 sm:w-auto sm:translate-x-0">
+              <Image src="/images/yum/yum-wave.webp?v=20261025-alpha" alt="Yum, el robot asistente de YU'AM, saluda junto a un cultivo de microalgas" width={48} height={72} className="animate-float h-12 w-auto shrink-0 object-contain transition-transform duration-300 hover:scale-110" />
+              <p className="text-xs font-medium leading-snug text-emerald-950">¡Hola! Soy Yum, tu guía en YU&apos;AM.</p>
             </div>
           </div>
         </section>
 
         {/* Visión y misión */}
-        <section className="border-y border-slate-200 bg-slate-50">
+        <MotionReveal><section className="border-y border-slate-200 bg-slate-50">
           <div className="mx-auto grid max-w-6xl gap-10 px-6 py-16 md:grid-cols-2">
             <div>
               <h2 className="text-sm font-medium text-emerald-600">Visión</h2>
@@ -155,13 +147,13 @@ export default function Home() {
               </p>
             </div>
           </div>
-        </section>
+        </section></MotionReveal>
 
         {/* Módulos / fases interactivas */}
-        <PhasesSection />
+        <MotionReveal><PhasesSection /></MotionReveal>
 
         {/* Prototipo v2.0 */}
-        <section id="prototipo" className="border-t border-slate-200 bg-slate-50">
+        <MotionReveal><section id="prototipo" className="border-t border-slate-200 bg-slate-50">
           <div className="mx-auto max-w-6xl px-6 py-20">
             <p className="text-sm font-medium text-emerald-600">Prototipo v2.0</p>
             <h2 className="mt-3 max-w-2xl text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
@@ -176,10 +168,10 @@ export default function Home() {
               ))}
             </dl>
           </div>
-        </section>
+        </section></MotionReveal>
 
         {/* Impacto CleanTech */}
-        <section id="impacto" className="border-t border-slate-200 bg-white">
+        <MotionReveal><section id="impacto" className="border-t border-slate-200 bg-white">
           <div className="mx-auto grid max-w-6xl gap-10 px-6 py-20 md:grid-cols-2">
             <div>
               <p className="text-sm font-medium text-emerald-600">Impacto CleanTech</p>
@@ -208,10 +200,10 @@ export default function Home() {
               </div>
             </div>
           </div>
-        </section>
+        </section></MotionReveal>
 
         {/* Herramientas */}
-        <section id="herramientas" className="border-t border-slate-200 bg-white">
+        <MotionReveal><section id="herramientas" className="border-t border-slate-200 bg-white">
           <div className="mx-auto max-w-6xl px-6 py-20">
             <p className="text-sm font-medium text-emerald-600">Herramientas</p>
             <h2 className="mt-3 text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
@@ -251,7 +243,7 @@ export default function Home() {
               ))}
             </ul>
           </div>
-        </section>
+        </section></MotionReveal>
       </main>
 
       <Footer />

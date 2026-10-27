@@ -3,8 +3,9 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import type { PublicNode } from '@/lib/database.types'
-import { formatMetric } from '@/lib/dashboard'
 import { FAIR_NODE } from '@/lib/fair-node'
+import Image from 'next/image'
+import AnimatedMetric from './AnimatedMetric'
 
 const metrics = [
   { key: 'ppm', label: 'CO₂ estimado', unit: 'ppm', digits: 1 },
@@ -50,8 +51,8 @@ export default function OfficialFairNode() {
       <div className="min-w-0"><p className="text-sm font-semibold text-emerald-700">Nodo oficial de la feria</p><h2 id="fair-node-title" className="mt-1 break-words text-xl font-bold text-slate-900">{node?.nombre_nodo ?? FAIR_NODE.name}</h2><p className="mt-2 text-sm text-slate-600">{node?.algae_type ?? FAIR_NODE.algae_type} · {node?.city ?? FAIR_NODE.city}, {node?.country ?? FAIR_NODE.country}</p><p className="mt-1 text-sm text-slate-600">{node?.board_type ?? FAIR_NODE.board_type}</p></div>
       <span className="rounded-full border border-emerald-200 bg-white px-3 py-1.5 text-xs font-semibold text-emerald-700">{node ? node.is_demo_vip ? 'VIP · 1 lectura cada 10 segundos' : 'Nodo estándar · 1 lectura cada 30 minutos' : loaded ? 'Pendiente de conexión' : 'Preparando nodo oficial'}</span>
     </div>
-    <dl className="grid gap-5 p-5 sm:grid-cols-2 sm:p-6 xl:grid-cols-5">{metrics.map(metric => <div key={metric.key}><dt className="text-sm text-slate-600">{metric.label}{metric.unit && ` (${metric.unit})`}</dt><dd className="mt-2 font-mono text-2xl font-semibold tabular-nums text-emerald-700">{formatMetric(node?.telemetry?.last[metric.key], metric.digits)}</dd></div>)}</dl>
-    <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 px-5 py-4 sm:px-6"><p role="status" className="text-xs leading-5 text-slate-600">{node?.ultimo_envio ? `Última lectura: ${new Date(node.ultimo_envio).toLocaleString('es-GT')}.` : 'Esperando la primera lectura del fotobiorreactor.'} La pantalla consulta el nodo cada 10 segundos.</p><Link href="/perfil" className="text-sm font-semibold text-emerald-700 underline underline-offset-4">Configurar mi hardware</Link></div>
+    <dl className="grid gap-5 p-5 sm:grid-cols-2 sm:p-6 xl:grid-cols-5">{metrics.map(metric => <div key={metric.key}><dt className="text-sm text-slate-600">{metric.label}{metric.unit && ` (${metric.unit})`}</dt><dd className="mt-2 min-h-8 font-mono text-2xl font-semibold tabular-nums text-emerald-700"><AnimatedMetric value={node?.telemetry?.last[metric.key]} digits={metric.digits} unit="" loading={!loaded} /></dd></div>)}</dl>
+    <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 px-5 py-4 sm:px-6"><div className="flex items-center gap-2 text-xs leading-5 text-slate-600">{!loaded && <Image src="/images/yum/yum-working.webp?v=20261025-alpha" alt="Yum carga las métricas del nodo oficial" width={34} height={42} className="animate-float h-9 w-auto object-contain" />}{node?.ultimo_envio ? `Última lectura: ${new Date(node.ultimo_envio).toLocaleString('es-GT')}.` : loaded ? 'Esperando la primera lectura del fotobiorreactor.' : 'Yum está consultando el nodo.'} La pantalla consulta el nodo cada 10 segundos.</div><Link href="/perfil" className="text-sm font-semibold text-emerald-700 underline underline-offset-4">Configurar mi hardware</Link></div>
     {error && <p role="alert" className="border-t border-amber-200 bg-amber-50 px-5 py-3 text-sm text-amber-900">{error} <button type="button" className="font-semibold underline" onClick={() => setRetry(value => value + 1)}>Reintentar</button></p>}
   </section>
 }

@@ -23,7 +23,7 @@ function RobotAvatar({ mood, size = 40 }: { mood: Mood; size?: number }) {
     sad: 'Yum triste porque no pudo responder',
     pointing: 'Yum te invita a iniciar sesión',
   }
-  return <Image src={`/images/yum/yum-${mood}.webp?v=20261025-alpha`} alt={descriptions[mood]} width={size} height={size} className="shrink-0 object-contain" />
+  return <Image src={`/images/yum/yum-${mood}.webp?v=20261025-alpha`} alt={descriptions[mood]} width={size} height={size} className="animate-float shrink-0 object-contain transition-transform duration-300 group-hover:scale-110" />
 }
 
 export function YumChatSession({ open, onMoodChange }: { open: boolean; onMoodChange: (mood: Mood) => void }) {
@@ -181,7 +181,7 @@ export default function ChatBotWidget() {
         <Link href="/login" onClick={() => setOpen(false)} className="rounded-xl bg-emerald-700 px-4 py-3 text-sm font-semibold text-white hover:bg-emerald-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700">Iniciar sesión</Link>
       </div>}
     </section>
-    <button type="button" onClick={() => setOpen(value => !value)} aria-expanded={open} aria-controls="yuam-chat-panel" className="z-[9999] flex items-center gap-2 rounded-full bg-emerald-800 px-4 py-2.5 text-sm font-semibold text-white shadow-lg hover:bg-emerald-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700">
+    <button type="button" onClick={() => setOpen(value => !value)} aria-expanded={open} aria-controls="yuam-chat-panel" className="group z-[9999] flex items-center gap-2 rounded-full bg-emerald-800 px-4 py-2.5 text-sm font-semibold text-white shadow-lg transition-transform duration-200 hover:scale-[1.03] hover:bg-emerald-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700">
       <RobotAvatar mood={loading ? 'working' : !user ? 'pointing' : mood} size={30} /><span>{open ? 'Ocultar chat' : 'Preguntar a Yum'}</span>
     </button>
   </aside>

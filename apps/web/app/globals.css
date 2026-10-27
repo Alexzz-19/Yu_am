@@ -43,6 +43,27 @@ h1, h2, h3 {
   overflow-wrap: anywhere;
 }
 
+@keyframes yum-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+@keyframes metric-shimmer {
+  0% { background-position: 150% 0; }
+  100% { background-position: -150% 0; }
+}
+
+.animate-float {
+  animation: yum-float 3.6s ease-in-out infinite;
+  transform-origin: center;
+}
+
+.metric-shimmer {
+  background: linear-gradient(90deg, #e2e8f0 20%, #f8fafc 45%, #e2e8f0 70%);
+  background-size: 220% 100%;
+  animation: metric-shimmer 1.6s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
