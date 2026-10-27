@@ -122,10 +122,6 @@ export default function Home() {
 
           <div className="relative min-w-0">
             <PhotobioreactorHero />
-            <div className="absolute -bottom-5 left-1/2 flex w-[min(19rem,calc(100%-1.5rem))] -translate-x-1/2 items-center gap-3 rounded-2xl border border-emerald-100 bg-white/95 p-2.5 shadow-xl backdrop-blur sm:bottom-5 sm:left-auto sm:right-5 sm:w-auto sm:translate-x-0">
-              <Image src="/images/yum/yum-wave.webp?v=20261025-alpha" alt="Yum, el robot asistente de YU'AM, saluda junto a un cultivo de microalgas" width={48} height={72} className="animate-float h-12 w-auto shrink-0 object-contain transition-transform duration-300 hover:scale-110" />
-              <p className="text-xs font-medium leading-snug text-emerald-950">¡Hola! Soy Yum, tu guía en YU&apos;AM.</p>
-            </div>
           </div>
         </section>
 

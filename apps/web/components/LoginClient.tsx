@@ -15,7 +15,7 @@ function authOrigin(): string {
 export default function LoginClient() {
   const router = useRouter()
   const { user, loading } = useAuth()
-  const captchaRequired = process.env.NODE_ENV !== 'development'
+  const captchaRequired = process.env.NODE_ENV !== 'development' && Boolean(process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY)
   const [captchaToken, setCaptchaToken] = useState('')
   const [attempt, setAttempt] = useState(0)
   const [busy, setBusy] = useState(false)

@@ -5,11 +5,11 @@ import type { NodeSummary } from '@/lib/database.types'
 import { DASHBOARD_METRICS, formatMetric, type DashboardReadings } from '@/lib/dashboard'
 import { nodeRequest } from '@/lib/node-api'
 import { supabase } from '@/lib/supabaseClient'
-import Sparkline from './Sparkline'
 import { telemetryInterval } from '@/lib/fair-node'
 import AnimatedMetric from './AnimatedMetric'
 import Image from 'next/image'
 import MotionReveal from './MotionReveal'
+import TelemetryTrendChart, { type TelemetryChartKey } from './TelemetryTrendChart'
 
 const panelClass = 'rounded-2xl border border-slate-200 bg-white'
 function time(value: string) { return new Date(value).toLocaleString('es-GT') }
@@ -80,10 +80,7 @@ export default function NodeTelemetryPanel({ node, userId }: { node: NodeSummary
       })}
     </MotionReveal>
     <p className="text-xs leading-5 text-slate-600">Cada indicador muestra su última medición disponible entre las 96 lecturas más recientes. La señal de CO₂ del MQ-135 requiere calibración. El nodo admite un envío cada {telemetryInterval(node.is_demo_vip) === 10 ? '10 segundos (VIP de feria)' : '30 minutos'}.</p>
-    <MotionReveal className="grid gap-5 lg:grid-cols-2">{DASHBOARD_METRICS.filter(metric => metric.key === 'ppm_value' || metric.key === 'ph_value').map(metric => {
-      const values = readings.map(row => row[metric.key]).filter((value): value is number => typeof value === 'number' && Number.isFinite(value)).reverse()
-      return <article key={metric.key} className={`${panelClass} p-5`}><div className="mb-5 flex items-center justify-between gap-3"><h3 className="font-semibold text-slate-900">Tendencia de {metric.label}</h3><span className="text-xs text-slate-600">{values.length} mediciones</span></div><Sparkline data={values} /><p className="mt-3 text-xs text-slate-600">Valores recibidos, en orden cronológico.</p></article>
-    })}</MotionReveal>
+    <MotionReveal className="grid gap-5 lg:grid-cols-2">{(['ppm_value', 'water_temperature', 'humidity', 'light_lux'] as TelemetryChartKey[]).map(metric => <TelemetryTrendChart key={metric} metric={metric} readings={readings} />)}</MotionReveal>
     <div className={`${panelClass} overflow-hidden`}>
       <h3 className="px-5 py-4 text-lg font-semibold text-slate-900">Historial del nodo</h3>
       <div className="overflow-x-auto"><table className="w-full text-left text-sm"><caption className="sr-only">Últimas 96 lecturas del nodo {node.name}</caption><thead className="border-y border-slate-200 bg-slate-50 text-slate-600"><tr><th scope="col" className="whitespace-nowrap px-5 py-3">Fecha y hora</th>{DASHBOARD_METRICS.map(metric => <th key={metric.key} scope="col" className="whitespace-nowrap px-4 py-3">{metric.label}{metric.unit && ` (${metric.unit})`}</th>)}</tr></thead><tbody className="divide-y divide-slate-100 text-slate-900">{readings.map(row => <tr key={row.id}><th scope="row" className="whitespace-nowrap px-5 py-3 font-normal">{time(row.created_at)}</th>{DASHBOARD_METRICS.map(metric => <td key={metric.key} className="whitespace-nowrap px-4 py-3 font-mono tabular-nums">{formatMetric(row[metric.key], metric.digits)}</td>)}</tr>)}{!loading && readings.length === 0 && <tr><td colSpan={6} className="px-5 py-8 text-center text-slate-600"><span className="flex flex-col items-center gap-3"><Image src="/images/yum/yum-idle.webp?v=20261025-alpha" alt="Yum acompaña mientras conectas el primer sensor" width={44} height={52} className="animate-float h-11 w-auto object-contain" /><span>Todavía no hay lecturas. Configura el envío de telemetría con la clave de este nodo desde tu perfil.</span></span></td></tr>}</tbody></table></div>
