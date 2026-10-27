@@ -76,6 +76,7 @@ export type RegisteredNode = {
   sensors: string[]
   category: string | null
   university: string | null
+  is_demo_vip: boolean
 }
 
 export type HardwareReactor = { id: string; node_id: string | null; user_id: string | null; name: string; board_type: string; algae_type: string; sensors: string[]; location_name: string; latitude: number; longitude: number; api_key: string; created_at: string }
@@ -100,6 +101,7 @@ export type PublicNode = {
   board_type?: string
   category?: string | null
   university?: string | null
+  is_demo_vip?: boolean
 }
 
 type Table<Row> = { Row: Row; Insert: Partial<Row>; Update: Partial<Row>; Relationships: [] }

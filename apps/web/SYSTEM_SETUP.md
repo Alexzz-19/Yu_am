@@ -8,12 +8,15 @@ Configurar exclusivamente `apps/web/.env.local` en desarrollo y las variables eq
 - `GEMINI_MODEL`: modelo de generación; por defecto `gemini-3.1-flash-lite` (comprobado con una respuesta técnica real).
 - `NEXT_PUBLIC_GA_ID`: identificador `G-…`. Analytics se carga únicamente con consentimiento `all`.
 
+El cliente servidor de Supabase proporciona el transporte `ws` para admitir el runtime Node 20 utilizado en la compilación local; no incluye este transporte en el cliente del navegador.
+
 ## Esquema desplegado comprobado
 
 Aplicar `supabase/migrations/202610250003_hardware_quota_map.sql` sobre el esquema desplegado antes de publicar esta versión.
 Aplicar después `202610250004_node_key_protection.sql`: elimina el acceso anónimo directo a claves y aplica RLS por propietario.
 Aplicar `202610250005_chat_history.sql`: crea el historial privado de Yum y actualiza la función de ingesta para aceptar como máximo una lectura por nodo cada 30 minutos.
 Aplicar `202610250006_dashboard_explorer.sql`: añade humedad a `readings`, categoría e institución opcionales a `nodes`, y publica `readings` en Supabase Realtime. Conserva la firma de ingesta anterior y las políticas de acceso por propietario.
+Aplicar `202610260007_fair_vip_telemetry.sql`: añade la bandera administrativa `is_demo_vip` y aplica un intervalo atómico de 10 segundos para VIP, manteniendo 1800 segundos para nodos estándar. Ver `FAIR_NODE_SETUP.md` para la conexión del nodo oficial.
 La tabla `public.nodes` contiene `id`, `user_id`, `name`, `country`, `city`, `lat`, `lng`, `token`, `created_at`, `board_type`, `algae_type` y `sensors`.
 El trigger `yuam_sync_reactor` mantiene su reactor (`node_id`, `user_id`, placa, cepa, sensores, ubicación y clave) dentro de la misma transacción.
 La creación, reubicación y rotación se revierten por completo si falla esa sincronización.
@@ -51,6 +54,7 @@ La ruta `/yum` y el widget comparten el historial autenticado en `yum_chat_histo
 `POST /api/telemetry` recibe la clave del nodo en `Authorization: Bearer …` y valores opcionales
 `co2_ppm`, `ph`, `temperatura`, `humedad`, `lux`, `pm25` (al menos uno). `humedad` se almacena como `readings.humidity`, en porcentaje entre 0 y 100. La función `yuam_ingest_hardware`
 asocia la lectura al reactor sincronizado, valida límites y aplica un intervalo mínimo de 30 minutos por nodo; los reintentos tempranos reciben HTTP 429 y `Retry-After`.
+La excepción VIP usa la bandera guardada en Supabase; no se acepta desde el dispositivo ni desde el formulario de registro. La respuesta incluye `interval_seconds` (10 o 1800).
 Los valores PM2.5 se expresan en µg/m³; lux es iluminancia y temperatura está en °C.
 `yuam_public_node_stats` agrega en PostgreSQL la última lectura y las medias móviles de 7 y 30 días,
 sin truncar las lecturas ni sustituir valores ausentes por ceros. El mapa consulta estos datos cada 30 minutos.

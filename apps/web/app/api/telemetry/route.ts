@@ -17,11 +17,14 @@ export async function POST(request: Request) {
     if (error) throw error
     if (!data || typeof data !== 'object' || Array.isArray(data)) throw new Error('Invalid RPC response')
     if (data.status === 'unauthorized') throw new ApiError(401, 'Token de ingesta inválido.')
+    // El intervalo procede de la credencial validada en PostgreSQL, nunca del JSON del dispositivo.
+    const interval = data.interval_seconds === 10 ? 10 : 1800
     if (data.status === 'rate_limited') {
-      const seconds = typeof data.retry_after === 'number' ? Math.max(1, Math.min(1800, Math.ceil(data.retry_after))) : 1800
-      return json({ error: 'Frecuencia de envío superada. Máximo 1 lectura cada 30 minutos por nodo.', retry_after: seconds }, 429, { 'Retry-After': String(seconds) })
+      const seconds = typeof data.retry_after === 'number' ? Math.max(1, Math.min(interval, Math.ceil(data.retry_after))) : interval
+      const error = interval === 10 ? 'Frecuencia de envío superada. Máximo 1 lectura cada 10 segundos para este nodo VIP.' : 'Frecuencia de envío superada. Máximo 1 lectura cada 30 minutos por nodo.'
+      return json({ error, retry_after: seconds, interval_seconds: interval }, 429, { 'Retry-After': String(seconds) })
     }
     if (data.status !== 'accepted') throw new Error('Invalid RPC status')
-    return json({ nodo_id: data.nodo_id, estado: 'Activo', created_at: data.created_at }, 201)
+    return json({ nodo_id: data.nodo_id, estado: 'Activo', created_at: data.created_at, interval_seconds: interval }, 201)
   } catch (error) { return apiFailure(error) }
 }

@@ -8,7 +8,7 @@ export const SENSOR_OPTIONS = [
 ] as const
 export type SensorType = typeof SENSOR_OPTIONS[number]['value']
 export type HardwareConfig = { board_type: string; algae_type: string; sensors: SensorType[]; category?: string | null; university?: string | null }
-export const NODE_FIELDS = 'id,user_id,name,country,city,lat,lng,created_at,board_type,algae_type,sensors,category,university' as const
+export const NODE_FIELDS = 'id,user_id,name,country,city,lat,lng,created_at,board_type,algae_type,sensors,category,university,is_demo_vip' as const
 
 export function parseHardware(value: Record<string, unknown>): HardwareConfig {
   const board = typeof value.board_type === 'string' ? value.board_type.trim() : ''

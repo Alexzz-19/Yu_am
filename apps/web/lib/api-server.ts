@@ -1,5 +1,6 @@
 import 'server-only'
-import { createClient } from '@supabase/supabase-js'
+import { createClient, type SupabaseClient, type WebSocketLikeConstructor } from '@supabase/supabase-js'
+import WebSocket from 'ws'
 import { createHash, randomBytes } from 'node:crypto'
 import type { Database } from './database.types'
 import { bearerToken } from './telemetry-validation'
@@ -25,10 +26,13 @@ function config(service = false) {
   return { url, key }
 }
 
-export function serverSupabase(service = false, token?: string) {
+export function serverSupabase(service = false, token?: string): SupabaseClient<Database> {
   const { url, key } = config(service)
   return createClient<Database>(url, key, {
     auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+    // ws implementa el transporte admitido por Realtime; sus sobrecargas de Node
+    // y eventos no coinciden con las firmas DOM del tipo mínimo de Supabase.
+    realtime: { transport: WebSocket as unknown as WebSocketLikeConstructor },
     ...(token ? { global: { headers: { Authorization: `Bearer ${token}` } } } : {}),
   })
 }

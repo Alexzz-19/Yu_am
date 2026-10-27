@@ -40,8 +40,8 @@ ENDPOINT = "https://yuam.tech/api/telemetry"
 TOKEN = os.environ["NODE_TOKEN"]
 PORT = os.getenv("SERIAL_PORT", "/dev/ttyUSB0")
 BAUD = int(os.getenv("BAUD_RATE", "115200"))
-INTERVAL = 30 * 60  # Un envío cada 30 minutos como máximo
-last_success = 0.0
+INTERVAL = max(10, int(os.getenv("SEND_INTERVAL_SECONDS", "1800")))  # Solo nodos VIP admiten 10 s
+next_allowed = 0.0
 
 with serial.Serial(PORT, BAUD, timeout=1) as port:
     while True:
@@ -57,8 +57,8 @@ with serial.Serial(PORT, BAUD, timeout=1) as port:
             for key in ("co2_ppm", "ph", "temperatura", "lux", "pm25", "humedad")
         ):
             continue
-        wait = INTERVAL - (time.monotonic() - last_success)
-        if last_success and wait > 0:
+        wait = next_allowed - time.monotonic()
+        if wait > 0:
             print(f"Lectura serial omitida; faltan {int(wait)} segundos para el siguiente envío")
             continue
         request = Request(ENDPOINT, data=json.dumps(reading).encode("utf-8"), method="POST",
@@ -66,9 +66,11 @@ with serial.Serial(PORT, BAUD, timeout=1) as port:
         try:
             with urlopen(request, timeout=15) as response:
                 print("YU'AM HTTP", response.status)
-                last_success = time.monotonic()
+                next_allowed = time.monotonic() + INTERVAL
         except HTTPError as error:
             print("YU'AM HTTP", error.code, error.read().decode("utf-8", errors="replace"))
+            if error.code == 429:
+                next_allowed = time.monotonic() + max(1, int(error.headers.get("Retry-After", INTERVAL)))
         except (URLError, TimeoutError) as error:
             print("Envío no confirmado; se conservará la siguiente lectura:", error)`
     },
@@ -182,6 +184,7 @@ for line in port:
         {'firmware' in currentConnection && <><p className="mt-4 text-xs font-semibold uppercase tracking-wide text-slate-500">Firmware Arduino IDE</p><pre className={codeClass}><code>{currentConnection.firmware}</code></pre><p className="mt-4 text-xs font-semibold uppercase tracking-wide text-slate-500">Puente Python</p></>}
         <pre role="tabpanel" className={codeClass}><code>{currentConnection.source}</code></pre>
         <p role="status" className="mt-2 text-sm text-slate-600">{copyStatus}</p>
+        <p className="mt-3 text-xs leading-5 text-slate-600">Para el fotobiorreactor oficial INED La Estancia, configura <code>SEND_INTERVAL_SECONDS=10</code> en el puente Python y genera una trama serial cada 10 segundos en Arduino. Solo su token VIP admite esa frecuencia; los nodos estándar mantienen 30 minutos.</p>
         <p className="mt-3 text-xs leading-5 text-slate-600">Guarda el token como secreto fuera del firmware publicado. La conversión del MQ-135 del ejemplo es orientativa y requiere calibración; se recomienda un entorno de medición ventilado y estable.</p>
       </section>
       <section aria-labelledby="offline-title" className="rounded-2xl border border-emerald-200 bg-emerald-50 p-6">

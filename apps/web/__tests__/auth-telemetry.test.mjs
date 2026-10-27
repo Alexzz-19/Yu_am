@@ -71,6 +71,31 @@ describe('ingesta autenticada', () => {
     assert.equal((await response.json()).error, 'Frecuencia de envío superada. Máximo 1 lectura cada 30 minutos por nodo.')
   })
 
+  it('respeta el intervalo VIP de PostgreSQL y nunca acepta una bandera enviada por el dispositivo', async () => {
+    let calls = 0
+    const route = modules({ rpc: async () => {
+      calls += 1
+      return { data: { status: 'rate_limited', retry_after: 4.2, interval_seconds: 10 }, error: null }
+    } })('app/api/telemetry/route.ts')
+    const response = await route.POST(request({ co2_ppm: 520 }))
+    assert.equal(response.status, 429)
+    assert.equal(response.headers.get('Retry-After'), '5')
+    const body = await response.json()
+    assert.equal(body.interval_seconds, 10)
+    assert.match(body.error, /10 segundos/)
+    assert.equal((await route.POST(request({ co2_ppm: 520, is_demo_vip: true }))).status, 400)
+    assert.equal(calls, 1)
+  })
+
+  it('comunica 10 segundos cuando el token VIP es aceptado y no autentica tokens desconocidos', async () => {
+    const vip = modules({ rpc: async () => ({ data: { status: 'accepted', nodo_id: 'official', interval_seconds: 10 }, error: null }) })('app/api/telemetry/route.ts')
+    const response = await vip.POST(request({ ph: 7 }))
+    assert.equal(response.status, 201)
+    assert.equal((await response.json()).interval_seconds, 10)
+    const invalid = modules({ rpc: async () => ({ data: { status: 'unauthorized', interval_seconds: 10 }, error: null }) })('app/api/telemetry/route.ts')
+    assert.equal((await invalid.POST(request({ ph: 7 }))).status, 401)
+  })
+
   it('rechaza tokens revocados y falla sin filtrar detalles de la base', async () => {
     const revoked = modules({ rpc: async () => ({ data: { status: 'unauthorized' }, error: null }) })('app/api/telemetry/route.ts')
     assert.equal((await revoked.POST(request({ ph: 7 }))).status, 401)
@@ -185,6 +210,24 @@ describe('dashboard real y explorador comunitario', () => {
     } })('app/api/telemetry/route.ts')
     assert.equal((await route.POST(request({ humedad: 0 }))).status, 201)
   })
+
+  it('limita el endpoint de feria al ID oficial y conserva el token fuera de la respuesta', async () => {
+    const loader = modules({
+      rpc: async () => ({ data: [
+        { id: '18e57a0c-6a18-4f18-9e18-1ed0018a2026', nombre_nodo: 'INED', estado: 'inactivo', ubicacion_ofuscada: {}, ultimo_envio: null, token: 'SECRET' },
+        { id: 'other', nombre_nodo: 'Otro nodo', estado: 'activo', ubicacion_ofuscada: {}, ultimo_envio: null },
+      ], error: null }),
+      from: () => ({ select: () => ({ in: async () => ({ data: [{ id: '18e57a0c-6a18-4f18-9e18-1ed0018a2026', is_demo_vip: true, token: 'SECRET' }], error: null }) }) }),
+    })
+    const route = loader('app/api/nodes/official/route.ts')
+    const response = await route.GET()
+    assert.equal(response.status, 200)
+    const body = await response.json()
+    assert.equal(body.node.id, '18e57a0c-6a18-4f18-9e18-1ed0018a2026')
+    assert.equal(body.node.is_demo_vip, true)
+    assert.ok(!JSON.stringify(body).includes('SECRET'))
+    assert.ok(!JSON.stringify(body).includes('Otro nodo'))
+  })
 })
 
 describe('gestión de nodos', () => {
@@ -205,7 +248,7 @@ describe('gestión de nodos', () => {
         return { insert: input => { calls.push(input); return { select: columns => { assert.ok(!columns.split(',').includes('token')); return { single: async () => ({ data: { id: 'node-1', user_id: input.user_id, name: input.name }, error: null }) } } } } }
       },
     })('app/api/nodes/route.ts')
-    const body = { name: ' Cultivo ', country: 'Guatemala', city: 'Guatemala', lat: 14.5968, lng: -90.5103, board_type: 'ESP32', algae_type: 'Spirulina', sensors: ['ph', 'temperature'] }
+    const body = { name: ' Cultivo ', country: 'Guatemala', city: 'Guatemala', lat: 14.5968, lng: -90.5103, board_type: 'ESP32', algae_type: 'Spirulina', sensors: ['ph', 'temperature'], is_demo_vip: true }
     const first = await route.POST(request(body)); const one = await first.json()
     const second = await route.POST(request(body)); const two = await second.json()
     assert.equal(first.status, 201); assert.equal(second.status, 201)
@@ -217,6 +260,7 @@ describe('gestión de nodos', () => {
     assert.equal(calls[0].token, one.token)
     assert.equal(calls[0].board_type, 'ESP32')
     assert.equal(calls[0].algae_type, 'Spirulina')
+    assert.equal(calls[0].is_demo_vip, undefined, 'El formulario público no puede conceder VIP')
     assert.deepEqual([...calls[0].sensors], ['ph', 'temperature'])
   })
 

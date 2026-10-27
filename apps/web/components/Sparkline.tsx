@@ -29,15 +29,15 @@ export default function Sparkline({
   data,
   width = 320,
   height = 64,
-  stroke = '#34d399',
-  fill = 'rgba(16, 185, 129, 0.18)',
+  stroke = '#059669',
+  fill = 'rgba(5, 150, 105, 0.10)',
 }: SparklineProps) {
   const pad = 6
   const puntos = construirPuntos(data, width, height, pad)
 
   if (puntos.length < 2) {
     return (
-      <div className="flex h-16 items-center justify-center text-xs text-[#A2C4B8]">
+      <div className="flex h-16 items-center justify-center text-xs text-slate-600">
         sin datos suficientes
       </div>
     )
