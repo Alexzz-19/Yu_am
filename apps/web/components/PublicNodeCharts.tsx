@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import TelemetryTrendChart, { type TelemetryChartPoint } from './TelemetryTrendChart'
+import { FAIR_NODE } from '@/lib/fair-node'
 
 const trends = [
   { key: 'ppm_value', label: 'CO₂ estimado' },
@@ -17,7 +18,10 @@ export default function PublicNodeCharts({ nodeId, refreshKey }: { nodeId: strin
   useEffect(() => {
     const controller = new AbortController()
     let active = true
-    void fetch('/api/nodes/public/' + encodeURIComponent(nodeId) + '/readings', { cache: 'no-store', signal: controller.signal })
+    const endpoint = nodeId === FAIR_NODE.id
+      ? '/api/nodes/official/readings'
+      : '/api/nodes/public/' + encodeURIComponent(nodeId) + '/readings'
+    void fetch(endpoint, { cache: 'no-store', signal: controller.signal })
       .then(async response => {
         const result = await response.json() as { readings?: TelemetryChartPoint[]; error?: string }
         if (!response.ok) throw new Error(result.error ?? 'No se pudieron cargar las tendencias públicas.')

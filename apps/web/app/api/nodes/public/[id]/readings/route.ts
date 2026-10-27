@@ -1,5 +1,4 @@
-import { apiFailure, ApiError, json } from '@/lib/api-server'
-import { communityNodes } from '@/lib/community-nodes'
+import { apiFailure, ApiError, json, serverSupabase } from '@/lib/api-server'
 import { publicNodeReadings } from '@/lib/public-node-readings'
 
 export const runtime = 'nodejs'
@@ -10,7 +9,11 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
     if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
       throw new ApiError(400, 'ID de nodo inválido.')
     }
-    const visibleNode = (await communityNodes()).some(node => node.id === id)
+    // The server verifies the public node using service role. No visitor JWT
+    // or RLS grant on raw readings is needed.
+    const client = serverSupabase(true)
+    const { data: visibleNode, error } = await client.from('nodes').select('id').eq('id', id).maybeSingle()
+    if (error) throw error
     if (!visibleNode) throw new ApiError(404, 'Nodo público no encontrado.')
     const { readings } = await publicNodeReadings(id)
     return json({
