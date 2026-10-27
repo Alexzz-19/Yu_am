@@ -1,7 +1,7 @@
 'use client'
 
 import { useReducedMotion } from 'framer-motion'
-import { Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import { Area, AreaChart, Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 
 export type TelemetryChartPoint = {
   created_at: string
@@ -29,10 +29,29 @@ function exactDateTime(value: string) {
   return capitalizedDate + ', ' + timePart
 }
 
+function exactTimeWithSeconds(value: string) {
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? '' : date.toLocaleTimeString('es-GT', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })
+}
+
+function exactDateTimeWithSeconds(value: string) {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return ''
+  const datePart = date.toLocaleDateString('es-GT', { day: '2-digit', month: 'short' })
+  const capitalizedDate = datePart.replace(/[a-záéíóúñ]+/i, month => month.charAt(0).toLocaleUpperCase('es-GT') + month.slice(1))
+  return capitalizedDate + ', ' + exactTimeWithSeconds(value)
+}
+
 export default function TelemetryTrendChart({ title, metric, readings }: { title?: string; metric: TelemetryChartKey; readings: TelemetryChartPoint[] }) {
   const reducedMotion = useReducedMotion()
   const chart = config[metric]
-  const data = readings.filter(reading => typeof reading[metric] === 'number' && Number.isFinite(reading[metric]))
+  const data = readings
+    .filter(reading => typeof reading[metric] === 'number' && Number.isFinite(reading[metric]))
+    .sort((left, right) => Date.parse(left.created_at) - Date.parse(right.created_at))
+  const liveReadings = metric === 'ppm_value'
+    ? [...readings].sort((left, right) => Date.parse(right.created_at) - Date.parse(left.created_at)).slice(0, 10).reverse()
+    : []
+  const liveHasData = liveReadings.some(reading => typeof reading.ppm_value === 'number' && Number.isFinite(reading.ppm_value))
   return <section aria-label={title ?? 'Tendencia de ' + chart.label} className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5">
     <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
       <h3 className="font-semibold text-slate-900">{title ?? 'Tendencia de ' + chart.label}</h3>
@@ -71,6 +90,28 @@ export default function TelemetryTrendChart({ title, metric, readings }: { title
           </BarChart>
         </ResponsiveContainer>
       </div>}
+      {metric === 'ppm_value' && <section aria-label="Monitoreo en Vivo de las últimas 10 lecturas" className="mt-2 rounded-xl border border-emerald-100 bg-emerald-50/40 p-3 xl:col-span-2 sm:p-4">
+        <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
+          <h4 className="text-sm font-semibold text-emerald-950">Monitoreo en Vivo (Últimas 10 lecturas)</h4>
+          <span className="text-xs text-slate-600">CO₂ estimado · ppm</span>
+        </div>
+        {liveHasData ? <div role="img" aria-label="Gráfico de área de CO₂ con las diez lecturas más recientes y hora hasta segundos">
+          <ResponsiveContainer width="100%" height={270}>
+            <AreaChart data={liveReadings} margin={{ top: 10, right: 12, bottom: 42, left: -14 }}>
+              <CartesianGrid stroke="#d1fae5" strokeDasharray="3 5" vertical={false} />
+              <XAxis dataKey="created_at" tickFormatter={exactTimeWithSeconds} tick={{ fill: '#334155', fontSize: 9 }} tickLine={false} axisLine={{ stroke: '#6ee7b7' }} interval={0} angle={-36} textAnchor="end" height={70} tickMargin={10} />
+              <YAxis width={58} tick={{ fill: '#334155', fontSize: 10 }} tickLine={false} axisLine={false} />
+              <Tooltip
+                labelFormatter={value => exactDateTimeWithSeconds(String(value))}
+                formatter={value => [typeof value === 'number' ? value.toFixed(chart.digits) + ' ' + chart.unit : 'Sin datos', chart.label]}
+                contentStyle={{ borderRadius: 12, borderColor: '#a7f3d0', color: '#0f172a', fontSize: 12 }}
+              />
+              <Area type="monotone" dataKey="ppm_value" name={chart.label} stroke="#047857" strokeWidth={2.5} fill="#6ee7b7" fillOpacity={0.4} dot={{ r: 4, fill: '#10b981', stroke: '#065f46', strokeWidth: 1.5 }} activeDot={{ r: 6, fill: '#047857', stroke: '#ffffff', strokeWidth: 2 }} isAnimationActive={!reducedMotion} animationDuration={450} connectNulls={false} />
+            </AreaChart>
+          </ResponsiveContainer>
+          <p className="mt-1 text-xs text-slate-600">{liveReadings.length} lecturas más recientes, ordenadas por hora.</p>
+        </div> : <p className="flex h-24 items-center justify-center text-sm text-slate-600">Sin datos de CO₂ en las últimas 10 lecturas.</p>}
+      </section>}
     </div> : <p className="flex h-[210px] items-center justify-center rounded-xl bg-slate-50 text-sm text-slate-600">Sin lecturas disponibles para esta tendencia.</p>}
     <p className="mt-2 text-xs text-slate-500">Valores de telemetría recibidos, en orden cronológico.</p>
   </section>
