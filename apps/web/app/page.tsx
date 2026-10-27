@@ -1,3 +1,4 @@
+import { pageMetadata } from '@/lib/seo'
 import Image from 'next/image'
 import Link from 'next/link'
 import Navbar from '@/components/Navbar'
@@ -18,11 +19,11 @@ type Herramienta = {
 }
 
 const especificaciones: Especificacion[] = [
-  { clave: 'Sensado', detalle: 'ESP32 + MQ-135: CO₂, temperatura, humedad y calidad de aire.' },
-  { clave: 'Resiliencia', detalle: 'Búfer local ante fallas de red; la telemetría no se pierde.' },
+  { clave: 'Sensado', detalle: 'Controladores compatibles y sensores de gases, pH, temperatura, humedad y luz según el montaje.' },
+  { clave: 'Registro local', detalle: 'Puentes compatibles para conservar mediciones en un archivo CSV.' },
   { clave: 'Nube', detalle: 'Supabase: PostgreSQL, Realtime y Row Level Security.' },
   { clave: 'Privacidad', detalle: 'Ofuscación de coordenadas de nodos (Privacy-by-Design).' },
-  { clave: 'Acceso', detalle: 'Autenticación segura y hasta 4 API keys por usuario.' },
+  { clave: 'Acceso', detalle: 'Sesión autenticada y claves individuales para conectar cada nodo.' },
 ]
 
 const herramientas: Herramienta[] = [
@@ -72,12 +73,14 @@ const herramientas: Herramienta[] = [
 
 const ods = ['3', '4', '11', '12', '13']
 
+export const metadata = pageMetadata("YU'AM | Plataforma IoT & Biotecnología para Fotobiorreactores", "Explora YU’AM: telemetría IoT, cultivos de microalgas, recursos científicos y hardware abierto para fotobiorreactores desde Guatemala.", "/", { absolute: true })
+
 export default function Home() {
   return (
     <div className="bg-white font-sans text-slate-900 selection:bg-emerald-100">
       <Navbar />
 
-      <main>
+      <main id="main-content" tabIndex={-1}>
         {/* Hero */}
         <section className="mx-auto grid max-w-6xl items-center gap-12 px-6 py-16 md:grid-cols-2 md:py-24">
           <div>
@@ -89,18 +92,15 @@ export default function Home() {
               className="h-auto w-full max-w-xs object-contain"
             />
             <p className="mt-6 flex items-center gap-2 text-sm font-medium text-emerald-600">
-              <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
-              </span>
+              <span aria-hidden="true" className="h-2 w-2 rounded-full bg-emerald-500" />
               CleanTech · Telemetría IoT
             </p>
             <h1 className="mt-4 max-w-xl text-4xl font-semibold leading-[1.08] tracking-tight text-slate-900 sm:text-5xl">
-              Biotecnología que respira en tiempo real.
+              Fotobiorreactores y ciencia abierta en Guatemala.
             </h1>
             <p className="mt-6 max-w-lg text-base leading-relaxed text-slate-600 sm:text-lg">
-              YU&apos;AM monitorea fotobiorreactores con nodos ESP32 + MQ-135, optimiza la captura de CO₂
-              y abre la investigación biológica a cualquier persona, con privacidad desde el diseño.
+              YU&apos;AM reúne lecturas de sensores, guías de hardware abierto y recursos científicos
+              para estudiar cultivos de microalgas y fotobiorreactores desde Guatemala.
             </p>
             <div className="mt-8 flex flex-wrap gap-4">
               <Link
@@ -121,7 +121,7 @@ export default function Home() {
           <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl border border-[#E2E8F0] bg-slate-100 shadow-md">
             <Image
               src="/images/principal.webp"
-              alt="Fotobiorreactor YU'AM en operación"
+              alt="Equipo del proyecto en MILAB junto al prototipo con botellas de cultivo iluminadas y figuras de la mascota"
               fill
               priority
               sizes="(max-width: 768px) 100vw, 50vw"

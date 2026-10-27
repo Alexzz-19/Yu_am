@@ -25,6 +25,33 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+:focus-visible {
+  outline: 2px solid #059669;
+  outline-offset: 3px;
+}
+
+a {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+#main-content {
+  scroll-margin-top: 5rem;
+}
+
+h1, h2, h3 {
+  overflow-wrap: anywhere;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 @media print {
   * {
     -webkit-print-color-adjust: exact;

@@ -3,7 +3,7 @@
 import { useRef, useState } from 'react'
 import Dialog from './ui/Dialog'
 
-export default function NodeTokenDialog({ token, nodeId, onClose }: { token: string; nodeId: string; onClose: () => void }) {
+export default function NodeTokenDialog({ token, nodeId, onClose, purpose = 'view', nodeName }: { token: string; nodeId: string; onClose: () => void; purpose?: 'created' | 'rotated' | 'view'; nodeName?: string }) {
   const tokenField = useRef<HTMLTextAreaElement>(null)
   const [copyMessage, setCopyMessage] = useState('')
 
@@ -19,7 +19,7 @@ export default function NodeTokenDialog({ token, nodeId, onClose }: { token: str
   }
 
   return (
-    <Dialog title="Clave API de tu nodo" description="Copia esta clave para configurar tu dispositivo. Se oculta al cerrar la ventana; puedes consultarla de nuevo desde tu perfil." onClose={onClose}>
+    <Dialog title={purpose === 'created' ? '¡Gracias! Tu nodo está registrado' : purpose === 'rotated' ? 'Token renovado correctamente' : 'Clave API de tu nodo'} description={purpose === 'created' ? `Guardamos ${nodeName || 'tu nodo'} y vinculamos su hardware en Supabase. Copia la clave para conectar tus sensores; el nodo ya aparece en tu lista.` : purpose === 'rotated' ? 'La nueva clave está lista. Actualiza tu dispositivo: la anterior ya no permite enviar lecturas.' : 'Copia esta clave para configurar tu dispositivo. Se oculta al cerrar la ventana; puedes consultarla de nuevo desde tu perfil.'} onClose={onClose}>
         <p className="break-all text-xs text-slate-400">Nodo {nodeId}</p>
         <label htmlFor="node-secret" className="mt-4 block text-sm font-medium text-emerald-300">Token de ingesta</label>
         <textarea ref={tokenField} id="node-secret" value={token} readOnly rows={3} spellCheck={false} className="mt-2 w-full resize-none rounded-xl border border-slate-700 bg-slate-900 p-4 font-mono text-sm leading-6 text-emerald-200 outline-none focus:border-emerald-400" />

@@ -311,6 +311,7 @@ export default function HubClient() {
           </span>
           <input
             type="text"
+            aria-label="Buscar publicaciones científicas"
             value={termino}
             onChange={(evento) => setTermino(evento.target.value)}
             placeholder={

@@ -67,8 +67,8 @@ const HITOS: Hito[] = [
   { dia: 7, titulo: 'Control de nutrientes y pH', detalle: 'Ajuste del medio de cultivo y verificación del pH.' },
   {
     dia: 15,
-    titulo: 'Punto máximo de absorción / Cosecha parcial (30%)',
-    detalle: 'Retiro del 30% de biomasa y reposición del medio de cultivo.',
+    titulo: 'Revisión de biomasa y posible cosecha parcial',
+    detalle: 'Evalúa el crecimiento y aplica el protocolo de cosecha correspondiente a la cepa.',
   },
   {
     dia: 30,
@@ -221,9 +221,9 @@ export default function SimuladorClient() {
           <p className="flex items-start gap-2 text-sm leading-relaxed text-amber-800">
             <span aria-hidden="true">🧪</span>
             <span>
-              <strong>Nota científica:</strong> Proyecciones e índices de captura aproximados, calculados
-              bajo condiciones controladas de laboratorio. Los valores reales pueden variar según la
-              temperatura, nutrientes e intensidad lumínica.
+              <strong>Modelo orientativo:</strong> Proyecciones calculadas con parámetros de referencia.
+              Requieren validación experimental en tu prototipo. Los resultados reales dependen de la
+              cepa, temperatura, nutrientes e intensidad lumínica.
             </span>
           </p>
         </div>

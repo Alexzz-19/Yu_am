@@ -1,3 +1,4 @@
+import { pageMetadata } from '@/lib/seo'
 import Image from 'next/image'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
@@ -20,7 +21,7 @@ const materiales: Material[] = [
   {
     nombre: 'Sensor MQ-135',
     icono: '🌫️',
-    detalle: 'Mide CO₂ y calidad del aire en tiempo real.',
+    detalle: 'Registra una señal de gases; la estimación de CO₂ requiere calibración.',
     categoria: 'IoT',
   },
   {
@@ -61,12 +62,14 @@ const materiales: Material[] = [
   },
 ]
 
+export const metadata = pageMetadata("Nosotros: MILAB, biotecnología y ciencia abierta", "Conoce al equipo y el prototipo YU’AM: fotobiorreactores de microalgas, hardware abierto y aprendizaje científico comunitario en Guatemala.", "/nosotros", {})
+
 export default function AboutPage() {
   return (
     <div className="bg-white font-sans text-slate-900">
       <Navbar />
 
-      <main>
+      <main id="main-content" tabIndex={-1}>
         {/* Hero */}
         <section className="border-b border-slate-200 bg-white">
           <div className="mx-auto max-w-6xl px-6 py-16 md:py-20">

@@ -2,47 +2,16 @@
 
 import Link from 'next/link'
 import { useSyncExternalStore } from 'react'
-
-type ConsentChoice = 'all' | 'essential'
-const CONSENT_KEY = 'yuam_cookie_consent'
-const CHANGE_EVENT = 'yuam-cookie-consent-change'
-
-function subscribe(onChange: () => void) {
-  window.addEventListener('storage', onChange)
-  window.addEventListener(CHANGE_EVENT, onChange)
-  return () => {
-    window.removeEventListener('storage', onChange)
-    window.removeEventListener(CHANGE_EVENT, onChange)
-  }
-}
-
-function hasSavedConsent() {
-  try {
-    const saved = window.localStorage.getItem(CONSENT_KEY)
-    return saved === 'all' || saved === 'essential'
-  } catch {
-    return false
-  }
-}
+import { getCookieConsent, setCookieConsent, subscribeCookieConsent, type CookieConsent } from '@/lib/cookie-consent'
 
 export default function CookieBanner() {
-  const hasConsent = useSyncExternalStore(subscribe, hasSavedConsent, () => false)
-
-  function choose(choice: ConsentChoice) {
-    try {
-      window.localStorage.setItem(CONSENT_KEY, choice)
-    } catch {
-      // Consent storage may be disabled by the browser.
-    }
-    window.dispatchEvent(new Event(CHANGE_EVENT))
-  }
-
-  if (hasConsent) return null
+  const consent = useSyncExternalStore<CookieConsent | null | undefined>(subscribeCookieConsent, getCookieConsent, () => undefined)
+  if (consent !== null) return null
 
   return (
     <aside
       aria-label="Preferencias de cookies"
-      className="fixed bottom-20 left-4 z-50 w-[calc(100vw-2rem)] max-w-xl rounded-2xl border border-emerald-200 bg-white p-5 text-slate-900 shadow-xl md:bottom-4"
+      className="fixed bottom-20 left-4 z-[9000] w-[calc(100vw-2rem)] max-w-xl rounded-2xl border border-emerald-200 bg-white p-5 text-slate-900 shadow-xl md:bottom-4 md:max-w-lg"
     >
       <h2 className="text-base font-semibold">Tu privacidad en YU&apos;AM</h2>
       <p className="mt-2 text-sm leading-relaxed text-slate-600">
@@ -57,15 +26,15 @@ export default function CookieBanner() {
       <div className="mt-4 flex flex-wrap gap-2">
         <button
           type="button"
-          onClick={() => choose('all')}
-          className="rounded-lg bg-emerald-800 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700"
+          onClick={() => setCookieConsent('all')}
+          className="min-h-11 rounded-lg bg-emerald-800 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700"
         >
           Aceptar todas
         </button>
         <button
           type="button"
-          onClick={() => choose('essential')}
-          className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700"
+          onClick={() => setCookieConsent('essential')}
+          className="min-h-11 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700"
         >
           Solo esenciales
         </button>

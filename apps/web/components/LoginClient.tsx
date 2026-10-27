@@ -113,7 +113,7 @@ export default function LoginClient() {
         <button type="button" role="tab" aria-selected={mode === 'login'} onClick={() => switchMode('login')} className={`rounded-lg px-3 py-2.5 text-sm font-semibold ${mode === 'login' ? 'bg-white text-emerald-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}>Iniciar sesión</button>
         <button type="button" role="tab" aria-selected={mode === 'signup'} onClick={() => switchMode('signup')} className={`rounded-lg px-3 py-2.5 text-sm font-semibold ${mode === 'signup' ? 'bg-white text-emerald-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}>Registrarse</button>
       </div>
-      <p className="mt-5 text-sm leading-relaxed text-slate-600">{mode === 'login' ? 'Vuelve a tus nodos, datos y protocolos.' : 'Crea tu espacio para registrar hasta cuatro nodos YU’AM.'}</p>
+      <p className="mt-5 text-sm leading-relaxed text-slate-600">{mode === 'login' ? 'Vuelve a tus nodos, datos y protocolos.' : 'Crea tu espacio para registrar y gestionar tus nodos YU’AM.'}</p>
       <button type="button" disabled={busy} onClick={google} className={`${button} mt-5 border border-slate-300 bg-white text-slate-900 hover:bg-slate-50`}>Continuar con Google</button>
       <div className="my-6 flex items-center gap-3 text-xs text-slate-500"><span className="h-px flex-1 bg-slate-200" />o con correo<span className="h-px flex-1 bg-slate-200" /></div>
       <form onSubmit={email} className="space-y-5">

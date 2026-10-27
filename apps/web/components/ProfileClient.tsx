@@ -22,6 +22,8 @@ type Node = NodeSummary
 type NodeSecret = {
   id: string
   token: string
+  purpose?: 'created' | 'rotated' | 'view'
+  nodeName?: string
 }
 
 type NodeRegistration = NodeSecret & {
@@ -253,7 +255,7 @@ export default function ProfileClient() {
         return
       }
       const result = await nodeRequest<NodeRegistration>('/api/nodes', 'POST', input)
-      setSecret({ id: result.id, token: result.token })
+      setSecret({ id: result.id, token: result.token, purpose: 'created', nodeName: result.node.name })
       nodesRevision.current += 1
       setNodes(current => [result.node, ...current.filter(node => node.id !== result.node.id)])
       resetNodeForm()
@@ -271,7 +273,7 @@ export default function ProfileClient() {
     setMessage('')
     try {
       const result = await nodeRequest<NodeSecret>(`/api/nodes/${node.id}`, 'PATCH', { action: 'rotate' })
-      setSecret(result)
+      setSecret({ ...result, purpose: 'rotated', nodeName: node.name })
       setMessage('Token rotado. Guarda el nuevo token antes de cerrar esta pantalla.')
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'No se pudo rotar la clave.')
@@ -445,7 +447,7 @@ export default function ProfileClient() {
           </div>
         </form>
 
-        {secret && <NodeTokenDialog token={secret.token} nodeId={secret.id} onClose={() => setSecret(null)} />}
+        {secret && <NodeTokenDialog token={secret.token} nodeId={secret.id} purpose={secret.purpose} nodeName={secret.nodeName} onClose={() => setSecret(null)} />}
         {nodeToDelete && <Dialog title="Eliminar nodo comunitario" description="¿Estás seguro de eliminar este nodo comunitario? Esta acción no se puede deshacer." onClose={() => { if (!busy) setNodeToDelete(null) }} busy={busy}><p className="text-sm text-slate-300">Se eliminarán «{nodeToDelete.name}», su reactor y las lecturas asociadas. La clave dejará de funcionar.</p>{deletionError && <p role="alert" className="mt-3 text-sm text-rose-300">{deletionError}</p>}<div className="mt-5 flex flex-wrap gap-3"><button type="button" disabled={busy} onClick={() => setNodeToDelete(null)} className="rounded-xl border border-slate-600 px-4 py-2.5 text-sm font-semibold disabled:opacity-50">Cancelar</button><button type="button" disabled={busy} onClick={() => deleteNode(nodeToDelete)} className="rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-rose-500 disabled:opacity-50">{busy ? 'Eliminando…' : 'Eliminar nodo'}</button></div></Dialog>}
 
         <div className="mt-8 border-t border-slate-100 pt-6">

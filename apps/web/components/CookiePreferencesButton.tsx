@@ -1,20 +1,14 @@
 'use client'
+import { setCookieConsent } from '@/lib/cookie-consent'
 
-export default function CookiePreferencesButton() {
+export default function CookiePreferencesButton({ label = 'Preferencias de cookies' }: { label?: string }) {
   return (
     <button
       type="button"
-      onClick={() => {
-        try {
-          window.localStorage.removeItem('yuam_cookie_consent')
-        } catch {
-          // The banner can still be reopened if browser storage is disabled.
-        }
-        window.dispatchEvent(new Event('yuam-cookie-consent-change'))
-      }}
-      className="underline hover:text-emerald-700"
+      onClick={() => setCookieConsent(null)}
+      className="inline-flex min-h-11 items-center underline hover:text-emerald-700"
     >
-      Preferencias de cookies
+      {label}
     </button>
   )
 }

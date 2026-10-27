@@ -1,100 +1,22 @@
 'use client'
 
 import Image from 'next/image'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
+import Dialog from './ui/Dialog'
 
-type Foto = {
-  src: string
-  alt: string
-  badge: string
-}
-
+type Foto = { src: string; alt: string; badge: string; width: number; height: number }
 const fotos: Foto[] = [
-  { src: '/images/nosotros-principal.webp', alt: 'Prototipo del fotobiorreactor YU\'AM', badge: 'Prototipo YU\'AM v2.0' },
-  { src: '/images/nosotros-1.webp', alt: 'Pruebas de laboratorio del equipo YU\'AM', badge: 'Laboratorio MILAB' },
-  { src: '/images/nosotros-2.webp', alt: 'Ensamble de sensores y cultivo de microalgas', badge: 'Equipo YU\'AM' },
-  { src: '/images/nosotros-3.webp', alt: 'Medición de calidad del aire con MQ-135', badge: 'Sensado MQ-135' },
-  { src: '/images/nosotros-4.webp', alt: 'Presentación del prototipo YU\'AM', badge: 'Presentación' },
+  { src: '/images/nosotros-principal.webp', alt: 'Equipo reunido en MILAB junto al prototipo con botellas iluminadas y figuras de la mascota', badge: 'Equipo y prototipo', width: 1280, height: 960 },
+  { src: '/images/nosotros-1.webp', alt: 'Vista cercana del equipo y el fotobiorreactor con botellas de cultivo iluminadas en MILAB', badge: 'Prototipo en MILAB', width: 1280, height: 960 },
+  { src: '/images/nosotros-2.webp', alt: 'Integrantes del proyecto posan junto a una figura de la mascota durante su visita a MILAB', badge: 'Equipo YU’AM', width: 1280, height: 960 },
+  { src: '/images/nosotros-3.webp', alt: 'Integrantes del proyecto revisan información en una computadora portátil durante una sesión de trabajo', badge: 'Sesión de trabajo', width: 1280, height: 720 },
+  { src: '/images/nosotros-4.webp', alt: 'Estudiantes y acompañantes conversan en el taller de MILAB, con impresoras 3D al fondo', badge: 'Intercambio en el taller', width: 1280, height: 720 },
 ]
 
 export default function PhotoGallery() {
-  const [seleccionada, setSeleccionada] = useState<Foto | null>(null)
-
-  useEffect(() => {
-    if (!seleccionada) return
-
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') setSeleccionada(null)
-    }
-
-    document.body.style.overflow = 'hidden'
-    window.addEventListener('keydown', onKeyDown)
-    return () => {
-      document.body.style.overflow = ''
-      window.removeEventListener('keydown', onKeyDown)
-    }
-  }, [seleccionada])
-
-  return (
-    <>
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-        {fotos.map((foto, i) => (
-          <button
-            type="button"
-            key={foto.src}
-            onClick={() => setSeleccionada(foto)}
-            aria-label={`Ampliar: ${foto.alt}`}
-            className={`group relative cursor-zoom-in overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 ${
-              i === 0 ? 'col-span-2 aspect-[4/3] md:col-span-2 md:row-span-2 md:aspect-auto' : 'aspect-[4/3]'
-            }`}
-          >
-            <Image
-              src={foto.src}
-              alt={foto.alt}
-              fill
-              sizes={i === 0 ? '(max-width: 768px) 100vw, 50vw' : '(max-width: 768px) 50vw, 25vw'}
-              priority={i === 0}
-              className="object-cover transition duration-500 group-hover:scale-105"
-            />
-            <span className="absolute left-3 top-3 rounded-full border border-slate-200 bg-white/90 px-3 py-1 text-xs font-medium text-slate-700 backdrop-blur">
-              {foto.badge}
-            </span>
-          </button>
-        ))}
-      </div>
-
-      {seleccionada && (
-        <div
-          className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/85 p-6 backdrop-blur-sm"
-          onClick={() => setSeleccionada(null)}
-          role="dialog"
-          aria-modal="true"
-        >
-          <button
-            type="button"
-            onClick={() => setSeleccionada(null)}
-            aria-label="Cerrar"
-            className="absolute right-5 top-5 grid h-10 w-10 place-items-center rounded-full bg-white/10 text-xl text-white transition hover:bg-white/20"
-          >
-            ✕
-          </button>
-          <figure className="max-w-5xl" onClick={(event) => event.stopPropagation()}>
-            <Image
-              src={seleccionada.src}
-              alt={seleccionada.alt}
-              width={1600}
-              height={1200}
-              className="max-h-[80vh] w-auto max-w-full rounded-xl object-contain"
-            />
-            <figcaption className="mt-4 flex flex-wrap items-center justify-center gap-3 text-center text-sm text-white/90">
-              <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium">
-                {seleccionada.badge}
-              </span>
-              <span>{seleccionada.alt}</span>
-            </figcaption>
-          </figure>
-        </div>
-      )}
-    </>
-  )
+  const [selected, setSelected] = useState<Foto | null>(null)
+  return <>
+    <div className="grid grid-cols-2 gap-4 md:grid-cols-4">{fotos.map((foto, index) => <button type="button" key={foto.src} onClick={() => setSelected(foto)} aria-label={`Ampliar: ${foto.alt}`} className={`group relative cursor-zoom-in overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 ${index === 0 ? 'col-span-2 aspect-[4/3] md:row-span-2 md:aspect-auto' : 'aspect-[4/3]'}`}><Image src={foto.src} alt={foto.alt} fill sizes={index === 0 ? '(max-width: 768px) 100vw, 50vw' : '(max-width: 768px) 50vw, 25vw'} className="object-cover" /><span className="absolute left-3 top-3 rounded-full border border-slate-200 bg-white/95 px-3 py-1 text-xs font-medium text-slate-700">{foto.badge}</span></button>)}</div>
+    {selected && <Dialog size="wide" title="Galería del proyecto YU’AM" description={selected.alt} onClose={() => setSelected(null)}><figure><Image src={selected.src} alt={selected.alt} width={selected.width} height={selected.height} className="mx-auto max-h-[65dvh] w-auto max-w-full rounded-xl object-contain" /><figcaption className="mt-4 text-center text-sm text-slate-200">{selected.badge}</figcaption></figure></Dialog>}
+  </>
 }

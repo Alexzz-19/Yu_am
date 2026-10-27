@@ -17,7 +17,7 @@ export default function DashboardFrame({ currentNode, heading, children }: { cur
         <nav aria-label="Navegación del dashboard" className="flex flex-wrap gap-5 text-sm text-slate-600"><Link href="/mapa" className="hover:text-emerald-600 hover:underline">Mapa</Link><Link href="/yum" className="hover:text-emerald-600 hover:underline">Yum</Link><Link href="/perfil" className="hover:text-emerald-600 hover:underline">Mi perfil y nodos</Link></nav>
       </div>
     </header>
-    <main className="mx-auto w-full max-w-7xl flex-1 space-y-6 px-4 py-8 sm:px-6 sm:py-10">{heading}{children}</main>
+    <main id="main-content" tabIndex={-1} className="mx-auto w-full max-w-7xl flex-1 space-y-6 px-4 py-8 sm:px-6 sm:py-10">{heading}{children}</main>
     <footer className="border-t border-slate-200 px-6 py-6 text-center text-xs text-slate-500">YU&apos;AM · Monitoreo comunitario de fotobiorreactores</footer>
   </div>
 }

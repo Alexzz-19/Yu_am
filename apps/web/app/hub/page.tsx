@@ -1,12 +1,15 @@
+import { pageMetadata } from '@/lib/seo'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import HubClient from '@/components/HubClient'
+
+export const metadata = pageMetadata("Hub Científico y Recursos | YU'AM", "Busca literatura científica sobre microalgas, biotecnología y fotobiorreactores, con enlaces a publicaciones y recursos de acceso abierto.", "/hub", { absolute: true })
 
 export default function HubPage() {
   return (
     <div className="bg-white font-sans text-slate-900">
       <Navbar />
-      <main className="mx-auto max-w-6xl px-6 py-12">
+      <main id="main-content" tabIndex={-1} className="mx-auto max-w-6xl px-6 py-12">
         <p className="text-sm font-medium text-emerald-600">Hub Científico</p>
         <h1 className="mt-3 max-w-2xl text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
           Literatura abierta sobre biotecnología y fotobiorreactores.

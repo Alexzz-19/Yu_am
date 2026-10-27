@@ -35,21 +35,13 @@ type EstadoAire = {
   descripcion: string
 }
 
-// Nodo Central — Ministerio de Educación (MINEDUC), Zona 10
-const CENTRO: [number, number] = [14.5968, -90.5103]
-const DIRECCION_CENTRAL = 'Parqueo del Ministerio de Educación, 6a. Calle 1-87, Zona 10, Ciudad de Guatemala'
+// Centro de la vista, sin representar un nodo registrado.
+const CENTRO: [number, number] = [14.6349, -90.5069]
 
 const LIMITES_MUNDO: [[number, number], [number, number]] = [
   [-90, -180],
   [90, 180],
 ]
-
-const iconoCentral = L.divIcon({
-  className: '',
-  html: '<div style="width:22px;height:22px;border-radius:50%;background:#10b981;border:3px solid #fff;box-shadow:0 0 0 4px rgba(16,185,129,0.3),0 2px 6px rgba(0,0,0,0.35)"></div>',
-  iconSize: [22, 22],
-  iconAnchor: [11, 11],
-})
 
 const iconoConsulta = L.divIcon({
   className: '',
@@ -77,48 +69,12 @@ function fmt(value: number | null): string {
 }
 
 function getAirQualityStatus(pm2_5: number | null): EstadoAire {
-  if (pm2_5 === null) {
-    return {
-      estado: 'Sin datos',
-      etiqueta: 'Sin datos',
-      emoji: '⚪',
-      color: 'bg-slate-400',
-      descripcion: 'Lectura no disponible para este punto.',
-    }
-  }
-  if (pm2_5 <= 12.0) {
-    return {
-      estado: 'Excelente / Aire Limpio',
-      etiqueta: 'Bueno',
-      emoji: '🟢',
-      color: 'bg-emerald-500',
-      descripcion: 'Calidad de aire óptima según la OMS.',
-    }
-  }
-  if (pm2_5 <= 35.4) {
-    return {
-      estado: 'Aceptable / Moderado',
-      etiqueta: 'Moderado',
-      emoji: '🟡',
-      color: 'bg-yellow-500',
-      descripcion: 'Calidad de aire aceptable.',
-    }
-  }
-  if (pm2_5 <= 55.4) {
-    return {
-      estado: 'Dañino a Grupos Sensibles',
-      etiqueta: 'Sensible',
-      emoji: '🟠',
-      color: 'bg-orange-500',
-      descripcion: 'Precaución para personas con asma o alergias.',
-    }
-  }
   return {
-    estado: 'No Saludable / Alerta',
-    etiqueta: 'Dañino',
-    emoji: '🔴',
-    color: 'bg-red-500',
-    descripcion: 'Niveles altos de contaminación detectados.',
+    estado: pm2_5 === null ? 'Sin datos de PM2.5' : 'Concentración modelada de PM2.5',
+    etiqueta: pm2_5 === null ? 'Sin datos' : 'Estimación ambiental',
+    emoji: '',
+    color: 'bg-sky-700',
+    descripcion: 'Datos del modelo de Open-Meteo para el punto consultado. No corresponden a una lectura de un nodo YU’AM ni constituyen una clasificación sanitaria.',
   }
 }
 
@@ -147,7 +103,8 @@ function FlyTo({ objetivo }: { objetivo: ObjetivoVuelo | null }) {
   const map = useMap()
   useEffect(() => {
     if (objetivo) {
-      map.flyTo([objetivo.lat, objetivo.lng], objetivo.zoom, { duration: 1.4 })
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) map.setView([objetivo.lat, objetivo.lng], objetivo.zoom, { animate: false })
+      else map.flyTo([objetivo.lat, objetivo.lng], objetivo.zoom, { duration: 1.4 })
     }
   }, [objetivo, map])
   return null
@@ -179,7 +136,7 @@ function PopupCalidad({
 
       <div className={`mt-3 rounded-lg px-3 py-2 text-white ${estado.color}`}>
         <p className="text-sm font-bold">
-          {estado.emoji} {estado.etiqueta.toUpperCase()}
+          {estado.etiqueta}
         </p>
         <p className="text-[11px] opacity-90">{estado.estado}</p>
       </div>
@@ -193,7 +150,7 @@ function PopupCalidad({
 
       <p className="mt-2 text-xs leading-relaxed text-slate-600">{estado.descripcion}</p>
       <p className="mt-1 text-[10px] text-slate-400">
-        Open-Meteo · {calidad.time ? new Date(calidad.time).toLocaleString() : '—'}
+        Open-Meteo · estimación modelada · {calidad.time ? new Date(calidad.time).toLocaleString() : '—'}
       </p>
     </div>
   )
@@ -201,16 +158,11 @@ function PopupCalidad({
 
 export default function GlobalMap() {
   const [nodes, setNodes] = useState<PublicNode[]>([])
-  const [calidadCentral, setCalidadCentral] = useState<CalidadAire | null>(null)
   const [puntoConsulta, setPuntoConsulta] = useState<PuntoAire | null>(null)
   const [ubicacionUsuario, setUbicacionUsuario] = useState<PuntoAire | null>(null)
   const [objetivo, setObjetivo] = useState<ObjetivoVuelo | null>(null)
   const [cargando, setCargando] = useState(false)
   const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    fetchCalidad(CENTRO[0], CENTRO[1]).then(setCalidadCentral)
-  }, [])
 
   useEffect(() => {
     const controller = new AbortController()
@@ -304,32 +256,18 @@ export default function GlobalMap() {
           <FlyTo objetivo={objetivo} />
 
           {nodes.filter(node => Number.isFinite(node.ubicacion_ofuscada.lat) && Number.isFinite(node.ubicacion_ofuscada.lng)).map(node => (
-            <Marker key={node.id} position={[node.ubicacion_ofuscada.lat!, node.ubicacion_ofuscada.lng!]} icon={iconoComunitario}>
+            <Marker key={node.id} position={[node.ubicacion_ofuscada.lat!, node.ubicacion_ofuscada.lng!]} icon={iconoComunitario} title={`Nodo comunitario: ${node.nombre_nodo}`} alt={`Ubicación aproximada de ${node.nombre_nodo}`}>
               <Popup maxWidth={420}><NodeTelemetrySummary node={node} /></Popup>
             </Marker>
           ))}
 
-          <Marker position={CENTRO} icon={iconoCentral}>
-            <Popup>
-              {calidadCentral ? (
-                <PopupCalidad
-                  titulo="Nodo Central YU'AM v2.0"
-                  subtitulo={DIRECCION_CENTRAL}
-                  calidad={calidadCentral}
-                />
-              ) : (
-                <div className="min-w-[220px] p-1">
-                  <p className="text-sm font-semibold text-slate-800">Nodo Central YU&apos;AM v2.0</p>
-                  <p className="mt-1 text-xs text-slate-400">Consultando calidad del aire…</p>
-                </div>
-              )}
-            </Popup>
-          </Marker>
 
           {puntoConsulta && (
             <Marker
               position={[puntoConsulta.lat, puntoConsulta.lng]}
               icon={iconoConsulta}
+              title="Punto de consulta del modelo ambiental"
+              alt="Punto de consulta de Open-Meteo"
               eventHandlers={{ add: (evento) => evento.target.openPopup() }}
             >
               <Popup>
@@ -346,6 +284,8 @@ export default function GlobalMap() {
             <Marker
               position={[ubicacionUsuario.lat, ubicacionUsuario.lng]}
               icon={iconoUsuario}
+              title="Tu ubicación aproximada para la consulta ambiental"
+              alt="Tu ubicación para la consulta de Open-Meteo"
               eventHandlers={{ add: (evento) => evento.target.openPopup() }}
             >
               <Popup>
@@ -359,25 +299,9 @@ export default function GlobalMap() {
           )}
         </MapContainer>
 
-        {/* Leyenda de calidad del aire */}
-        <div className="pointer-events-none absolute bottom-3 left-3 z-[1000] rounded-lg border border-slate-200 bg-white/95 px-3 py-2 shadow-sm backdrop-blur">
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
-            Calidad del aire (PM2.5)
-          </p>
-          <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-slate-600">
-            <span className="flex items-center gap-1.5">
-              <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" /> Bueno
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="h-2.5 w-2.5 rounded-full bg-yellow-500" /> Moderado
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="h-2.5 w-2.5 rounded-full bg-orange-500" /> Sensible
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="h-2.5 w-2.5 rounded-full bg-red-500" /> Dañino
-            </span>
-          </div>
+        <div className="pointer-events-none absolute bottom-3 left-3 z-[1000] rounded-lg border border-slate-200 bg-white/95 px-3 py-2 text-xs text-slate-600 shadow-sm">
+          <p className="font-semibold">Fuentes del mapa</p>
+          <p className="mt-1">Verde: nodos registrados · Azul: consulta ambiental modelada</p>
         </div>
 
         {cargando && (

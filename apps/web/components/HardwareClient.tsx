@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import Image from 'next/image'
+import HardwareDiagram, { type HardwareDiagramKind } from './HardwareDiagram'
 
 type FirmwareId = 'arduino' | 'esp32'
 type TipoAlga = 'chlorella' | 'spirulina' | 'scenedesmus'
@@ -41,8 +41,7 @@ type ItemCableado = {
   icono: string
   nombre: string
   detalle: string
-  imagen: string
-  autor: string
+  diagram: HardwareDiagramKind
 }
 
 type Pieza3D = {
@@ -121,43 +120,37 @@ const CABLEADO: ItemCableado[] = [
     icono: '🔌',
     nombre: 'Cables Jumper',
     detalle: 'Macho-Macho, Macho-Hembra y Hembra-Hembra para conectar sensores a la protoboard.',
-    imagen: 'https://images.unsplash.com/photo-1553406830-ef2513450d76?auto=format&fit=crop&w=600&q=80',
-    autor: 'Unsplash',
+    diagram: 'jumper',
   },
   {
     icono: '🧩',
     nombre: 'Protoboard / Placa de pruebas',
     detalle: 'Base sin soldadura para montar y validar el circuito antes de fijarlo.',
-    imagen: 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=600&q=80',
-    autor: 'Unsplash',
+    diagram: 'breadboard',
   },
   {
     icono: '💧',
     nombre: 'Manguera de silicona 1/4"',
     detalle: 'Conduce agua y CO₂ entre el reactor, la bomba y la piedra difusora.',
-    imagen: 'https://images.unsplash.com/photo-1559827260-dc66d52bef19?auto=format&fit=crop&w=600&q=80',
-    autor: 'Unsplash',
+    diagram: 'tube',
   },
   {
     icono: '🫧',
     nombre: 'Piedra aireadora de pecera',
     detalle: 'Difunde aire en burbujas finas para oxigenar y agitar el cultivo.',
-    imagen: 'https://images.unsplash.com/photo-1522069169874-c58ec4b76be5?auto=format&fit=crop&w=600&q=80',
-    autor: 'Unsplash',
+    diagram: 'air-stone',
   },
   {
     icono: '🌫️',
     nombre: 'Sensor MQ-135',
-    detalle: 'Sensor de calidad del aire que mide CO₂ y compuestos volátiles.',
-    imagen: 'https://images.unsplash.com/photo-1601042879364-f3947d3f9c16?auto=format&fit=crop&w=600&q=80',
-    autor: 'Unsplash',
+    detalle: 'Sensor sensible a varios gases. Su estimación de CO₂ requiere calibración y no equivale a una medición selectiva.',
+    diagram: 'gas-sensor',
   },
   {
     icono: '⛲',
     nombre: 'Bomba de agua 5V',
     detalle: 'Bomba sumergible que recircula el medio de cultivo y oxigena la biomasa.',
-    imagen: 'https://images.unsplash.com/photo-1517077304055-6e89abbf09b0?auto=format&fit=crop&w=600&q=80',
-    autor: 'Unsplash',
+    diagram: 'pump',
   },
 ]
 
@@ -573,7 +566,7 @@ uv run main.py`}
         </div>
         <p className="mt-4 text-sm text-slate-600">
           <strong>Costo total estimado: {formatearDivisa(totalGTQ)}</strong> · aproximado según la divisa
-          seleccionada y los componentes marcados.
+          seleccionada y los componentes marcados. Los precios y conversiones son referencias de presupuesto; confirma sus valores vigentes al adquirir materiales.
         </p>
       </section>
 
@@ -581,7 +574,7 @@ uv run main.py`}
       <section className="rounded-2xl border border-slate-200 bg-white p-6">
         <h2 className="text-lg font-semibold text-slate-900">Guía visual de cableado y materiales de pecera</h2>
         <p className="mt-1 text-sm text-slate-500">
-          Tarjetas de ayuda con enlaces a fotos de referencia (atribución Unsplash / Pexels).
+          Esquemas orientativos de los componentes. Verifica el pinout y las especificaciones del modelo que utilices.
         </p>
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
           {CABLEADO.map((item) => (
@@ -589,30 +582,13 @@ uv run main.py`}
               key={item.nombre}
               className="group overflow-hidden rounded-xl border border-slate-200 bg-white transition-all hover:shadow-md"
             >
-              <Image
-                src={item.imagen}
-                alt={item.nombre}
-                width={600}
-                height={400}
-                className="h-40 w-full rounded-t-xl object-cover transition-transform duration-500 group-hover:scale-105"
-              />
+              <HardwareDiagram kind={item.diagram} label={item.nombre} />
               <div className="p-4">
                 <div className="flex items-center gap-3">
                   <span className="text-2xl">{item.icono}</span>
                   <span className="font-medium text-slate-900">{item.nombre}</span>
                 </div>
                 <p className="mt-2 text-sm text-slate-600">{item.detalle}</p>
-                <p className="mt-3 text-xs text-slate-400">
-                  📷 Foto por {item.autor} en{' '}
-                  <a
-                    href={item.imagen}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="font-medium text-emerald-600 hover:text-emerald-500"
-                  >
-                    Unsplash ↗
-                  </a>
-                </p>
               </div>
             </div>
           ))}

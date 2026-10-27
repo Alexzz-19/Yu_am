@@ -17,13 +17,13 @@ export default function Footer() {
           <span className="text-sm font-semibold text-slate-900">YU&apos;AM</span>
         </Link>
         <p className="text-xs text-slate-500">
-          © 2026 YU&apos;AM · MILAB · Plan K&apos;atun 2032 · ODS 3, 4, 11, 12, 13
+          © 2026 YU&apos;AM · MILAB · Hardware abierto y biotecnología
         </p>
         <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs text-slate-500">
-          <Link href="/privacidad" className="underline hover:text-emerald-700">Privacidad</Link>
-          <Link href="/terminos" className="underline hover:text-emerald-700">Términos</Link>
+          <Link href="/privacidad" className="inline-flex min-h-11 items-center underline hover:text-emerald-700">Privacidad</Link>
+          <Link href="/terminos" className="inline-flex min-h-11 items-center underline hover:text-emerald-700">Términos</Link>
           <CookiePreferencesButton />
-          <a href="mailto:Yuam_support@protonmail.com" className="hover:text-emerald-700">Yuam_support@protonmail.com</a>
+          <a href="mailto:Yuam_support@protonmail.com" className="inline-flex min-h-11 items-center break-all hover:text-emerald-700">Yuam_support@protonmail.com</a>
         </div>
       </div>
     </footer>

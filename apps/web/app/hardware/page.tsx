@@ -1,14 +1,17 @@
+import { pageMetadata } from '@/lib/seo'
 import Image from 'next/image'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import HardwareClient from '@/components/HardwareClient'
 import HardwareFieldGuide from '@/components/HardwareFieldGuide'
 
+export const metadata = pageMetadata("Hardware abierto y guías de fotobiorreactores", "Construye y conecta un fotobiorreactor con Arduino, ESP32 o un puente Python. Consulta componentes, calibración y ejemplos de telemetría.", "/hardware", {})
+
 export default function HardwarePage() {
   return (
     <div className="bg-white font-sans text-slate-900">
       <Navbar />
-      <main className="mx-auto max-w-6xl px-6 py-12">
+      <main id="main-content" tabIndex={-1} className="mx-auto max-w-6xl px-6 py-12">
         <div className="flex items-center justify-between gap-6">
           <div>
             <p className="text-sm font-medium text-emerald-600">DIY Hardware Studio</p>
